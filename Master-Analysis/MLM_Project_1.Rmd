@@ -1,0 +1,211 @@
+---
+title: "Multilevel Models - Project 1 Part 1"
+date: "4/21/2020"
+output: pdf_document
+number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# Load data and libraries, create new column in dataframe, "math1st"
+library(tidyverse)
+library(lmerTest)
+
+classroom <- foreign::read.dta("/Users/mbp/Documents/NYU/APSTA 2042 - Multi-level Models (Nested)/Datasets/classroom.dta")
+classroom <- classroom %>% mutate(math1st = mathkind + mathgain)
+```
+
+# Question 1
+
+**Estimate an Unconditional Means Model (UMM) with random intercepts for both schools and classrooms (nested in schools).**
+
+```{r}
+# Fit unconditional means model (UMM):
+lm_umm <- lmer(math1st ~ 1 + (1|schoolid/classid), data = classroom)
+summary(lm_umm)
+```
+
+**a. Report the ICC for schools and the ICC for classrooms**
+
+> Based on the summary output of the UMM model, the ICC for schools and classrooms are: 
+$$ICC_{school} = \frac{280.69}{85.47 + 280.69 + 1146.79} = 0.185525$$
+$$ICC_{classroom} = \frac{85.47}{85.47 + 280.69 + 1146.79} = 0.05649228$$
+
+**b. WRITE OUT THIS MODEL using your preferred notation, but use the same choice of notation for the remainder of your project. Be mindful and explicit about any assumptions made.**
+
+$$MATH1ST_{ijk} = b_0 + \zeta_k + \eta_{jk} + \epsilon_{ijk}$$
+$$\mbox{with } \zeta_k \sim N(0, \sigma^2_\zeta), \mbox{ } \eta_{jk} \sim N(0, \sigma^2_\eta), \mbox{ and } \epsilon_{ijk} \sim N(0, \sigma^2_\epsilon) \mbox{, independent of each other}$$
+
+# Question 2
+
+**ADD ALL School level predictors:**
+
+```{r}
+# Add HOUSEPOV as a school level predictor to the UMM Model:
+lm2 <- lmer(math1st ~ housepov + (1|schoolid/classid), data = classroom)
+summary(lm2)
+```
+
+**a. Report if adding the predictors as a block is justifed:**
+
+```{r}
+# Run ANOVA to test if adding school-level predictor is justified 
+# (i.e. statistically significant change in variance components).
+anova(lm_umm, lm2, refit = F)
+```
+
+> The addition of the school-level predictor is justified according to the ANOVA between the unconditional means model, and the model with the school-level predictor HOUSEPOV. The chi-square test results in a p-value of approximately 0.
+
+**b. Report change in $\sigma^2_\zeta$:**
+
+> Change in $\sigma^2_\zeta = 250.93 - 280.69 = -29.76$
+
+\pagebreak
+
+# Question 3 
+
+**ADD ALL Classroom level predictors**
+
+```{r}
+# Add classroom-level predictors YEARSTEA, MATHKNOW, MATHPREP to prior model:
+lm3 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + (1|schoolid/classid), data = classroom)
+summary(lm3)
+```
+
+**a. Report if adding the predictors as a block is justifed.**
+
+```{r}
+# Run ANOVA comparing previous model with only school-level predictors added:
+  # Remove cases that have missing values:
+  classroom_cc <- classroom[complete.cases(classroom),]
+
+  # Re-fit models lm2 and lm3 using complete clases (fully observed):
+  lm3_refit <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + (1|schoolid/classid), data = classroom_cc)
+  lm2_refit <- lmer(math1st ~ housepov + (1|schoolid/classid), data = classroom_cc)
+  
+  # Run ANOVA comparing lm2 and lm3 using complete clases (fully observed):
+  anova(lm2_refit, lm3_refit, refit = F)
+```
+
+> The addition of the classroom-level predictors as a block is not justified according to the ANOVA comparing the refit models using fully observed cases. The chi-square test results in a p-value of 0.08667.
+
+**b. Report change in $\sigma^2_\eta$ and change in $\sigma^2_\epsilon$**
+
+* Change in $\sigma^2_\eta = 94.36 - 82.36 = 12.00$
+* Change in $\sigma^2_\epsilon = 1136.43 - 1146.96 = -10.53$
+
+**c. Give a potential reason as to why  $\sigma^2_\epsilon$ is reduced, but not $\sigma^2_\eta$?**
+
+> The decrease in the student-level variation ($\sigma^2_\epsilon$) could be due to the classroom-level predictors impacting individual students' scores. Although classrooms may differ based on teacher, the impact on a change in a classroom-level predictor would be much greater on the student-level.
+
+\pagebreak
+
+# Question 4
+
+**ADD (nearly) ALL student level predictors (but not mathgain or mathkind, as these are outcomes in this context).**
+
+```{r}
+# Add student-level predictors SEX, MINORITY, SES to prior model:
+lm4 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (1|schoolid/classid), data = classroom)
+summary(lm4)
+```
+\pagebreak
+**a. Report if justifed statistically as a block of predictors**
+
+```{r}
+# Run ANOVA comparing previous model that has only school & classroom-level predictors:
+anova(lm3, lm4, refit = F)
+```
+
+> The addition of the student-level predictors as a block is justified according to the ANOVA comparing the previous model containing school & classroom-level predictors, to the current model including school, classroom, and student-level predictors. The chi-square test results in a p-value of approximately 0.
+
+**b. Report change in variance components for all levels**
+
+* Change in $\sigma^2_\zeta = 169.45 - 223.31 = -53.86$
+* Change in $\sigma^2_\eta = 93.89 - 94.36 = -0.47$
+* Change in $\sigma^2_\epsilon = 1064.96 - 1136.43 = -71.47$
+
+**c. Give a potential reason as to why the school level variance component drops from prior model**
+
+> The student-level predictors explain some variance at the school level. SES & Minority Status, and SEX composition of children vary between different schools and may impact math scores. For example, some schools located in poorer areas with a different demographic of students will have much different individual math scores than those in more affluent areas.
+
+**d. WRITE OUT THIS MODEL using your chosen notation.**
+$$
+\begin{aligned} 
+MATH1ST_{ijk} = b_0 + b_1HOUSEPOV_k + b_2YEARSTEA_{jk} + b_3MATHKNOW_{jk} + \\ b_4MATHPREP_{jk} + b_5SEX_{ijk} + b_6MINORITY_{ijk} + b_7SES_{ijk} + \zeta_k + \eta_{jk} + \epsilon_{ijk}
+\end{aligned}
+$$
+$$\mbox{with } \zeta_k \sim N(0, \sigma^2_\zeta), \mbox{ } \eta_{jk} \sim N(0, \sigma^2_\eta), \mbox{ and } \epsilon_{ijk} \sim N(0, \sigma^2_\epsilon) \mbox{, independent of each other}$$
+
+\pagebreak
+# Question 5
+
+**a. Try to add a random slope for each teacher level predictor (varying at the school level; one by one separately - not all together)**
+
+```{r}
+# Add random slope effects varying at the school level, for each teacher-level predictor:
+
+lm5 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + yearstea | schoolid) + (1|schoolid/classid), data = classroom)
+
+lm6 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + mathknow | schoolid) + (1|schoolid/classid), data = classroom)
+
+lm7 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + mathprep | schoolid) + (1|schoolid/classid), data = classroom)
+  
+summary(lm5)
+summary(lm6)
+summary(lm7)
+  
+### QUESTION: Do we add each separately, then run separate anovas for each random slope 
+### addition comparing to no random slopes? or run an anova on all of them included?
+```
+
+
+**b. Report the model fit or lack of fit**
+
+```{r}
+# Run ANOVA on each random slope model comparing to the model with no random slopes:
+anova(lm4,lm5, refit = F)
+anova(lm4,lm6, refit = F)
+anova(lm4,lm7, refit = F)
+```
+
+> The ANOVAs for each model with a random slope addition show that the addition of random slopes on the teacher level predictors, varying by school, is not significant.
+
+**c. Why is it a bad idea to include a random slope on the housepov effect?**
+
+**d. Retry the above, allowing the slopes to be correlated with the random intercepts (still one by one)**
+
+**e. Report anything unusual about the variance components (changes that are in a direction you didn’t expect) and any**
+
+\pagebreak
+
+# Question 6
+
+**a. Try to add a random slope for each student level predictor (varying at the classroom level; one by one - not all together)**
+
+```{r}
+# Add random slope effects varying at the classroom-level, for each student-level predictor:
+lm8 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + sex | classid) + (1|schoolid/classid), data = classroom)
+
+lm9 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + minority | classid) + (1|schoolid/classid), data = classroom)
+
+lm10 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + ses | classid) + (1|schoolid/classid), data = classroom)
+
+summary(lm8)
+summary(lm9)
+summary(lm10)
+```
+
+**b. Why is it a bad idea to include a classroom-level variable with random slopes at the classroom level?**
+
+**c. Retry the above, allowing the slopes to be correlated with the random intercepts. Report findings.**
