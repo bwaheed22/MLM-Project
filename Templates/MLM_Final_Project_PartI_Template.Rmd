@@ -1,0 +1,492 @@
+---
+title: "MLM Final Project Part 1"
+date:  "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+###Load libraries
+if(!requireNamespace("here"))
+  install.packages("here", repos = "https://cloud.r-project.org")
+require("here")
+
+if(!requireNamespace("ggplot2"))
+  install.packages("ggplot2", repos = "https://cloud.r-project.org")
+require("ggplot2")
+
+if(!requireNamespace("lme4"))
+  install.packages("lme4", repos = "https://cloud.r-project.org")
+require("lme4")
+
+if(!requireNamespace("lmerTest"))
+  install.packages("lmerTest", repos = "https://cloud.r-project.org")
+require("lmerTest")
+
+if(!requireNamespace("car"))
+  install.packages("car", repos = "https://cloud.r-project.org")
+require("car")
+```
+
+## Team Members and division of work: 
+
+## Question 0.
+### Load classroom.csv and create MATH1ST (fit all models using REML)
+```{r}
+# Insert code to load data and create math1st variable 
+```  
+
+## Question 1.
+### Estimate UMM model with random intercepts for both schools and classrooms. 
+```{r}
+# Insert code to fit model and print summary 
+```
+
+### a. Report the ICC for schools and classrooms:
+```{r}
+# Insert code if you'd like but you can also do this inline 
+```  
+
+    Response: 
+      
+### b. Write out the model:
+      
+    Model 1 Equation:
+
+## Question 2.
+### Add all school-level predictors:
+
+    Model 2 Equation:
+
+```{r}
+# Insert code to fit model and print summary 
+```
+
+### a. Report if the additional predictors are justified:
+
+```{r}
+# Insert code to compare models 
+```
+  
+    Response: 
+
+### b. Report the change to school variance:
+
+Response: 
+
+## Question 3: Add all class-level predictors
+
+    Model 3 Equation:
+
+```{r}
+# Insert code to fit model and print summary 
+```
+
+### a. Report if adding the predictors is justified:
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+### b. Report changes in class-level variance and individual variance:
+
+    Response: 
+
+### c. Give a potential reason to explain why individual variance but not class variance is reduced:
+
+    Response:     
+
+## Question 4.
+### Add all student-level predictors excepting mathgain and mathkind:
+
+```{r}
+# Insert code to fit model and print summary 
+```
+
+### a. Report if the block of predictors is justified:
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response: 
+
+### b. Report change in all variance components
+
+    Response: 
+
+### c. Give a potential reason as to why the school variance drops from the last model:
+
+    Response: 
+
+### d. Write this model out:
+
+    Model 4 Equation: 
+
+## Question 5.
+
+### a. Try to add a random slope for each teacher level predictor (varying at the school level; one by one separately - not all together)
+
+### b. Report the models and their fit.
+
+```{r}
+# Insert code to fit first model in Q5b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response: 
+
+```{r}
+# Insert code to fit second model in Q5b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response: 
+
+```{r}
+# Insert code to fit third model in Q5b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response: 
+
+### c. Why is it a bad idea to include a random slope on the housepov effect?
+
+    Response: 
+
+### d. Retry the above models, allowing the slopes to be correlated with the random intercepts (still one by one):
+
+```{r}
+# Insert code to fit first model in Q5d model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response: 
+
+```{r}
+# Insert code to fit second model in Q5d model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+    
+    Response: 
+
+```{r}
+# Insert code to fit third model in Q5b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+### e. Report anything unusual about the variance components (changes that are in a direction you didn’t expect) and any potential explanation for why those changes occured (hint: what did you add to the model?).
+
+    Response:
+
+## Question 6.
+
+### a. Try to add a random slope for each student level predictor (varying at the classroom level; one by one - not all together)
+
+```{r}
+# Insert code to fit first model in Q6a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q6a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q6a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+### b. Why is it a bad idea to include a classroom-level variable with random slopes at the classroom level?
+
+    Response:
+
+### c. Retry the above, allowing the slopes to be correlated with the random intercepts. Report findings.
+
+```{r}
+# Insert code to fit first model in Q6c model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q6c model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q6c model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+
+## Question 7.
+
+### a. Try to add a random slope for each student level predictor varying at the school level:
+
+```{r}
+# Insert code to fit first model in Q7a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q7a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q7a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+### b. Retry the above, allowing the slopes to be correlated with the random intercepts.
+
+```{r}
+# Insert code to fit first model in Q7b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q7b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q7b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+### c. Report anything unusual about the variance components (changes that are unexpected)
+
+    Response:
+
+## Question 8.
+
+### a. Take the two predictors that had significant random slopes, in the forms in which they worked (indep. or correlated) and add both to the model, and test for need of one conditional on needing the other.
+
+```{r}
+# Fit models and run LRT tests 
+```
+
+    Response: 
+
+### b. Is the more complex model (with both random slopes in it) justified?
+
+```{r}
+# Insert code to compare models 
+```  
+
+    Reponse:
+
+### c. WRITE OUT THIS MODEL in your preferred notation  
+   
+    The model is:   
+
+##  Question 9.
+
+### a. For UMM, write down: V_S, V_C, V_E for the three variance components (simply the estimates)
+
+```{r}
+# If you want to look at your UMM insert code here or you can just do this in line 
+```
+    
+    V_S = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. For the most complicated (all fixed effects) random INTERCEPTS ONLY model, what are: V_C, V_S, V_E?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+```
+
+    V_S = 
+    
+    V_C = 
+    
+    V_E = 
+
+### c. By what fraction did these each decrease with the new predictors in the model?
+
+    V_S:
+    
+    V_C:
+    
+    V_E: 
+
+## Question 10. Now consider the model with a random slope in ses.
+
+### a. What are:  V_C, V_S(ses=0), V_E ?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+```
+
+    V_S(ses=0) = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. What are: V_S(ses=-0.50), V_S(ses=+0.5) ?
+
+    V_S(ses=0.5) =
+    
+    V_S(ses=-0.5) = 
+
+## Question 11.
+### Now consider the model with a random slope in minority.
+
+### a. What are:  V_C, V_S(minority=0), V_E ?
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line  
+```
+
+    V_S(minority=0) = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. What are: V_S(minority=0.25), V_S(minority=+0.50), V_S(minority=+0.75) ?
+
+    V_S(minority=0.25) = 
+
+```{r}
+# V_S(minority = 0.25)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.5) = 
+
+```{r}
+# V_S(minority = 0.50)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.75) = 
+
+```{r}
+# V_S(minority = 0.75)
+# Insert code if you want to do the calculations in R 
+```
+
+## Question 12.
+### Now consider the model with a random slope in ses & minority.
+
+### a. What are: V_C, V_S(minority=0,ses=0), V_E ? We need to list ‘ses=0, minority=0’ here, or we don’t know how to use the slope variance
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line  
+```
+
+    V_S(sex=0, minority=0) = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. In the last model, what is a “likely” (+/- 1 sd) range for \(\eta\)~0jk~
+
+    Response: 
+
+### c. Can we make a similar statement about \(\zeta\)~0k~?
+
+    Response: 
+
+### d. If you had a large value for \(\eta\)~0jk~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority?
+
+    Response: 
+
+### e. If you had a large value for \(\zeta\)~0k~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority (discuss each separately)?
+
+    Response: 
