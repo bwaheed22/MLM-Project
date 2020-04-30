@@ -1,0 +1,312 @@
+---
+title: "Project Week 1"
+author: "Joseph Marlo"
+date: "4/22/2020"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+# require(lme4)
+require(lmerTest)
+dat <- read_csv("~/Dropbox/School/NYU/2020_Spring/APSTA2042_Multilevel/Project/classroom.csv")
+
+dat$math1st <- dat$mathkind + dat$mathgain
+
+# set signficance level
+alpha <- 0.05
+```
+
+
+# Notes
+fit all models using REML
+
+lmerTest::lmer rather than lme4::lmer to call the MLM function
+
+<!-- Week 1 -->
+
+# 1
+Estimate an Unconditional Means Model (UMM) with random intercepts for both schools and classrooms (nested in schools).
+  a. Report the ICC for schools and the ICC for classrooms
+  b. WRITE OUT THIS MODEL using your preferred notation, but use the same choice of notation for the remainder of your project
+    i. Be mindful and explicit about any assumptions made.
+
+## a
+
+```{r}
+lme1 <- lmer(math1st ~ (1 | schoolid/classid), data = dat)
+summary(lme1)
+
+ICC.school <- 280.69 / (85.47 + 280.69 + 1146.79)
+ICC.class <- 85.47 / (85.47 + 280.69 + 1146.79)
+```
+
+## b
+
+$MATH1ST_{ijk} =  \beta_0 + \eta_{jk} + \zeta_{k} + \epsilon_{ijk}$ with $\eta_{jk} \sim N(0, \sigma_\eta^2)$, $\zeta_k \sim N(0, \sigma_\zeta^2)$, and  $\epsilon_{ijk} \sim N(0, \sigma_\epsilon^2)$, independently of one another, j represents classrooms and k represents schools
+
+# 2
+
+## a
+
+> justified bc pvalue is less than alpha 
+
+```{r}
+lme2 <- lmer(math1st ~ housepov + (1 | schoolid/classid), data = dat)
+summary(lme2)
+anova(lme2, lme1, refit = FALSE)
+```
+
+## b
+
+> $\sigma_{\zeta}$ 280.69 -> 250.93
+
+# 3
+
+## a
+
+This is a wald test. Not justified b/c pvalue less than alpha
+```{r}
+lme3 <- lmer(math1st ~ housepov + mathknow + mathprep + yearstea + (1 | schoolid/classid), data = dat)
+summary(lme3)
+
+
+car::linearHypothesis(lme3, c("mathknow", "mathprep", "yearstea"))
+```
+
+## b 
+> 82.36 -> 94.36
+
+> 1146.96 -> 1136.43
+
+## c
+
+????? Classroom level predictors cannot reduce between classroom variance
+
+# 4
+
+```{r}
+lme4 <- lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex + (1 | schoolid/classid), data = dat)
+summary(lme4)
+
+
+car::linearHypothesis(lme4, c("ses", "minority", "sex"))
+```
+
+## a
+
+Justifiably because pvalue is less than alpha
+
+## b
+
+94.36 -> 93.89
+223.31 -> 169.45
+1136.43 -> 1064.96
+
+## c
+???
+
+## d
+
+$MATH1ST_{ijk} =  \beta_0 + \beta_1 housepov_k + \beta_2 mathknow_{jk} + \beta_3 mathprep_{jk} + \beta_4 yearstea_{jk} + \beta_5 SES_{ijk} + \beta_6 minority_{ijk} + \beta_7 sex_{ijk} + \eta_{jk} + \zeta_{k} + \epsilon_{ijk}$ with $\eta_{jk} \sim N(0, \sigma_\eta^2)$, $\zeta_k \sim N(0, \sigma_\zeta^2)$, and  $\epsilon_{ijk} \sim N(0, \sigma_\epsilon^2)$, independently of one another, j represents classrooms and k represents schools
+
+# 5
+
+# 6
+
+<!-- Week 2 -->
+
+
+# 7
+a. Try to add a random slope for each student level predictor varying at the school level (one by one - not all together)
+
+```{r}
+# sex
+lme5 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (0 + sex | schoolid) + (1 | schoolid / classid), data = dat)
+summary(lm5)
+anova(lme5, lme4, refit = FALSE)
+
+# minority
+lme6 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (0 + minority | schoolid) + (1 | schoolid / classid), data = dat)
+summary(lme6)
+anova(lme6, lme4, refit = FALSE)
+
+# ses
+lme7 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (0 + ses | schoolid) + (1 | schoolid / classid), data = dat)
+summary(lme7)
+anova(lme7, lme4, refit = FALSE) #SIGNIFICANT
+```
+
+b. Retry the above, allowing the slopes to be correlated with the random intercepts.
+
+```{r}
+# sex
+lme8 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (sex | schoolid) + (1 | schoolid / classid), data = dat)
+summary(lme8)
+anova(lme8, lme4, refit = FALSE)
+
+# minority
+lme9 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (minority | schoolid) + (1 | schoolid / classid), data = dat)
+summary(lme9)
+anova(lme9, lme4, refit = FALSE) #SIGNFICANT
+
+# ses
+lme10 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (ses | schoolid) + (1 | schoolid / classid), data = dat)
+summary(lme10)
+anova(lme10, lme4, refit = FALSE)
+```
+
+
+c. Report anything unusual about the variance components (changes that are unexpected)
+
+
+# 8
+a. Take the two predictors that had significant (at 0.05 level) random slopes, in the forms in which they worked (indep. or correlated) and add both to the model, and test for need of one conditional on needing the other.
+
+```{r}
+rs_ses <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority +  
+    ses + (0 + ses | schoolid) + (1 | schoolid/classid), data = dat)
+
+rs_min <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority +  
+    ses + (minority | schoolid) + (1 | schoolid/classid), data = dat)
+
+rs_both <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority +  
+    ses + (0 + ses | schoolid) + (minority | schoolid) + (1 | schoolid/classid), data = dat)
+
+anova(rs_both, rs_ses, refit = FALSE) #SIGNFICANT
+anova(rs_both, rs_min, refit = FALSE) #SIGNFICANT
+```
+
+
+
+b. Is the more complex model (with both random slopes in it) justified? 
+
+```{r}
+anova(rs_both, lme4, refit = FALSE) #SIGNFICANT
+```
+
+
+c. WRITE OUT THIS MODEL in your preferred notation
+
+$MATH1ST_{ijk} =  \beta_0 + \beta_1 housepov_k + \beta_2 mathknow_{jk} + \beta_3 mathprep_{jk} + \beta_4 yearstea_{jk} + (\beta_5 + \zeta_{5k}) SES_{ijk} + (\beta_6 + \zeta_{6k}) minority_{ijk} + \beta_7 sex_{ijk} + \eta_{jk} + \zeta_{k} + \epsilon_{ijk}$ with $\eta_{jk} \sim N(0, \sigma_\eta^2)$, $\zeta_k \sim N(0, \sigma_\zeta^2)$,  $\epsilon_{ijk} \sim N(0, \sigma_\epsilon^2)$, and $\zeta_{5k} ~ N(0, \sigma_{\zeta_5}^2,  \zeta_{6k} ~ N(0, \sigma_{\zeta_6}^2$ independently of one another, j represents classrooms and k represents schools
+
+# 9
+a. For UMM, write down: V_S, V_C, V_E for the three variance components (simply the estimates) 
+
+```{r}
+summary(lme1)
+```
+
+    V_S = 280.69
+    
+    V_C = 85.47
+    
+    V_E = 1146.79
+
+b. For the most complicated (all fixed effects) random INTERCEPTS ONLY model, what are: V_C,
+V_S, V_E?
+
+```{r}
+summary(lme4)
+```
+
+    V_S = 169.45
+    
+    V_C = 93.89
+    
+    V_E = 1064.96
+
+
+c. By what fraction did these each decrease with the new predictors in the model?
+
+```{r}
+169.45 / 280.69 - 1
+93.89 / 85.47 - 1
+1064.96 / 1146.79 - 1
+```
+
+# 10 
+Now consider the model with a random slope in ses.
+a. What are: V_C, V_S(ses=0), V_E ?
+
+```{r}
+summary(rs_ses)
+```
+
+    V_S = 168.00
+    
+    V_C = 88.56
+    
+    V_E = 1035.11
+
+
+i. We need to list ‘ses=0’ here, or we don’t know how to use the slope variance.
+
+b. What are: V_S(ses=-0.50), V_S(ses=+0.5) ?
+
+    ??????
+
+# 11
+Now consider the model with a random slope in minority.
+a. What are: V_C, V_S(minority=0), V_E ?
+i. We need to list ‘minority=0’ here, or we don’t know how to use the slope variance.
+b. What are: V_S(minority=0.25), V_S(minority=+0.50), V_S(minority=+0.75) ?
+
+
+# 12
+Now consider the model with a random slope in ses & minority.
+a. What are: V_C, V_S(minority=0,ses=0), V_E ? We need to list ‘ses=0, minority=0’ here, or we
+don’t know how to use the slope variance
+b. In the last model, what is a “likely” (+/- 1 sd) range for η0jk.
+c. Can we make a similar statement about ζ0k?
+d. If you had a large value for η0jk, would you expect a large or small or “any” value for the two
+random slope terms, ζ1k and ζ2k for ses and minority?
+e. If you had a large value for ζ0k, would you expect a large or small or “any” value for the two
+random slope terms, ζ1k and ζ2k for ses and minority (discuss each separately)?
+
+
+
+
+
+## Notes ##
+
+### determining the levels of the predictors
+```{r}
+# school level
+dat %>% 
+  pivot_longer(cols = -schoolid) %>% 
+  group_by(schoolid, name) %>% 
+  summarize(len = length(unique(value))) %>% 
+  group_by(name) %>% 
+  summarize(allEqual = reduce(len, `==`))
+
+# classroom level
+dat %>% 
+  mutate(sch.class = paste0(schoolid, '-', classid)) %>% 
+  pivot_longer(cols = -sch.class) %>% 
+  group_by(sch.class, name) %>% 
+  summarize(len = length(unique(value))) %>% 
+  group_by(name) %>% 
+  summarize(allEqual = reduce(len, `==`))
+```
+
+
+Individual Level Predictors (I)
+    Ses
+    Minority
+    Sex 
+
+Classroom Level Predictors (J)
+    Mathknow
+    MathPrep
+    YearsTea
+
+School Level Predictors (K)
+    HousePov 
+
