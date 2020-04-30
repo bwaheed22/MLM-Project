@@ -1,0 +1,643 @@
+---
+title: "MLM Final Project Part 1"
+date:  "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+###Load libraries
+if(!requireNamespace("here"))
+  install.packages("here", repos = "https://cloud.r-project.org")
+require("here")
+
+if(!requireNamespace("ggplot2"))
+  install.packages("ggplot2", repos = "https://cloud.r-project.org")
+require("ggplot2")
+
+if(!requireNamespace("lme4"))
+  install.packages("lme4", repos = "https://cloud.r-project.org")
+require("lme4")
+
+if(!requireNamespace("lmerTest"))
+  install.packages("lmerTest", repos = "https://cloud.r-project.org")
+require("lmerTest")
+
+if(!requireNamespace("car"))
+  install.packages("car", repos = "https://cloud.r-project.org")
+require("car")
+```
+
+## Team Members and division of work: 
+
+## Question 0.
+### Load classroom.csv and create MATH1ST (fit all models using REML)
+```{r}
+# Inssert code to load data and create math1st variable 
+setwd('/Users/tdellucci/Desktop/datasets')
+dat <- read.csv ("classroom.csv")
+dat$math1st <-dat$mathkind + dat$mathgain 
+```  
+
+## Question 1.
+### Estimate UMM model with random intercepts for both schools and classrooms. 
+```{r}
+# Insert code to fit model and print summary 
+lm1 <- lmer(math1st ~ 1 + (1|schoolid/classid), data = classroom)
+summary(lm1)
+```
+
+### a. Report the ICC for schools and classrooms:
+```{r}
+# Insert code if you'd like but you can also do this inline 
+icc1 <- 85.47/(85.47 + 280.69 + 1146.79)
+icc2 <- 280.69/(85.47 + 280.69 + 1146.79)
+print (icc1)
+print (icc2)
+```  
+
+    Response: ICC_school = 0.19
+              ICC_classroom = 0.06
+      
+### b. Write out the model:
+      
+    Model 1 Equation:
+  $$
+MATHGAIN_{ijk} = b_0 + \eta_{jk} + \zeta_k + \varepsilon_{ijk},\mbox{ with } \eta_{jk}\sim N(0,\sigma_\eta^2), \zeta_k\sim N(0,\sigma_\zeta^2), \varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2),\mbox{ independent of one another, k represents schools and j represents clasrooms.}
+  $$ 
+
+## Question 2.
+### Add all school-level predictors:
+
+    Model 2 Equation:
+    
+ $$
+MATH1ST_{ijk} = b_0 + b_1housepov_k + \eta_{jk} + \zeta_k + \varepsilon_{ijk},\mbox{ with } \eta_{jk}\sim N(0,\sigma_\eta^2), \zeta_k\sim N(0,\sigma_\zeta^2), \varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2),\mbox{ independent of one another, k represents schools and j represents clasrooms.}
+ $$ 
+
+```{r}
+# Insert code to fit model and print summary 
+lm2 <- lmer(math1st ~ housepov + (1|schoolid/classid), data = classroom)
+summary(lm2)
+```
+
+### a. Report if the additional predictors are justified:
+
+```{r}
+# Insert code to compare models 
+anova(lm1, lm2, refit = F)
+```
+  
+    Response: The model is justified. 
+
+### b. Report the change to school variance:
+
+    Response: Change in $\sigma^2_\zeta = 250.93 - 280.69 = -29.76$
+
+## Question 3: Add all class-level predictors
+
+    Model 3 Equation:
+    
+  $$
+MATH1ST_{ijk} = b_0 + b_1housepov_k + b_2yearsteach_{jk} + b_3mathknow_{jk} + b_4mathprep_{jk} + \eta_{jk} + \zeta_k + \varepsilon_{ijk},\mbox{ with } \eta_{jk}\sim N(0,\sigma_\eta^2), \zeta_k\sim N(0,\sigma_\zeta^2), \varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2),\mbox{ independent of one another, k represents schools and j represents clasrooms.}
+ $$ 
+
+```{r}
+# Insert code to fit model and print summary 
+lm3 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + (1|schoolid/classid), data = dat)
+summary(lm3)
+```
+
+### a. Report if adding the predictors is justified:
+
+```{r}
+# Insert code to compare models 
+# Must compare blocks using subset as they are nested
+save.options <- options() 
+options(na.action = "na.pass")
+mm <- model.matrix(math1st ~ housepov + mathknow + mathprep + yearstea, data = dat)
+in_sample <- apply(is.na(mm), 1, sum) == 0
+options(save.options)
+
+
+# re-fit mlms using only fully observed observations (no listwise deletions)
+
+M3 <- lmerTest::lmer(math1st ~ (1 | schoolid/classid), data=dat, subset = in_sample)
+summary(M3)
+
+M3a <- lmerTest::lmer(math1st ~ housepov + (1 | schoolid/classid), data=dat, subset = in_sample)
+summary(M3a)
+
+M3b <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + (1 | schoolid/classid), data=dat, subset = in_sample)
+summary(M3b)
+
+#anova of subsets using REML to compare fixed effects as a block
+anova(M3, M3a, refit = F)
+anova(M3, M3b, refit = F)
+```
+
+    Response:
+
+### b. Report changes in class-level variance and individual variance:
+
+    Response: 
+Change in $\sigma^2_\eta = 94.36 - 82.36 = 12.00$
+Change in $\sigma^2_\epsilon = 1136.43 - 1146.96 = -10.53$
+    
+### c. Give a potential reason to explain why individual variance but not class variance is reduced:
+
+    Response:     
+
+## Question 4.
+### Add all student-level predictors excepting mathgain and mathkind:
+
+```{r}
+# Insert code to fit model and print summary 
+M4 <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex + (1 | schoolid/classid), data=dat)
+summary(M4)
+```
+
+### a. Report if the block of predictors is justified:
+
+```{r}
+# Insert code to compare models 
+# Insert code to compare models 
+# Must compare blocks using subset as they are nested
+save.options <- options() 
+options(na.action = "na.pass")
+mm2 <- model.matrix(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex, data = dat)
+in_sample <- apply(is.na(mm2), 1, sum) == 0
+options(save.options)
+
+# re-fit mlms using only fully observed observations (no listwise deletions)
+
+M4 <- lmerTest::lmer(math1st ~ housepov + (1 | schoolid/classid), data=dat, subset = in_sample)
+summary(M4)
+
+M4a <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex + (1 | schoolid/classid), data=dat, subset = in_sample)
+summary(M4a)
+
+#anova of subsets using FML to compare fixed effects as a block
+anova(M4, M4a, refit = F)
+```
+
+    Response: 
+
+### b. Report change in all variance components
+
+    Response: 
+Change in $\sigma^2_\eta = 94.6 - 93.89 = 0.71$
+Change in  $\sigma^2_\zeta = 221.1 - 169.45 = 51.65$
+Change in $\sigma^2_\epsilon = 1137.5 - 1064.96 = 72.54$
+
+### c. Give a potential reason as to why the school variance drops from the last model:
+
+    Response: 
+
+### d. Write this model out:
+
+    Model 4 Equation: 
+    
+  $$
+MATH1ST_{ijk} = b_0 + b_1housepov_k + b_2yearsteach_{jk} + b_3mathknow_{jk} + b_4mathprep_{jk} + b_5SEX_{ijk} + b_6MINORITY_{ijk} + b_7SES_{ijk} + \eta_{jk} + \zeta_k + \varepsilon_{ijk},\mbox{ with } \eta_{jk}\sim N(0,\sigma_\eta^2), \zeta_k\sim N(0,\sigma_\zeta^2), \varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2),\mbox{ independent of one another, k represents schools and j represents clasrooms.}
+ $$     
+
+## Question 5.
+
+### a. Try to add a random slope for each teacher level predictor (varying at the school level; one by one separately - not all together)
+
+```{r}
+M5<- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (1|schoolid/classid), data = dat)
+summary(M5)
+```
+
+### b. Report the models and their fit.
+
+```{r}
+# Insert code to fit first model in Q5b model and print summary 
+M5a <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + mathprep | schoolid) + (1|schoolid/classid), data = dat)
+summary(M5a)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M5, M5a, refit = F)
+```
+
+   Response: The random slope at mathprep is not justified.  
+
+```{r}
+# Insert code to fit second model in Q5b model and print summary 
+M5b<- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority + ses + (0 + yearstea | schoolid) + (1|schoolid/classid), data = dat)
+summary(M5b)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M5, M5b, refit = F)
+```
+
+    Response: The random slpe at years teaching is not justified. 
+
+```{r}
+# Insert code to fit third model in Q5b model and print summary 
+M5c <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep +  sex + minority + ses + (0 + mathknow | schoolid) + (1|schoolid/classid), data = dat)
+summary(M5c)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M5, M5c, refit = F)
+```
+
+    Response: The random slope at mathknowledge is not justified. 
+
+### c. Why is it a bad idea to include a random slope on the housepov effect?
+
+    Response: 
+
+### d. Retry the above models, allowing the slopes to be correlated with the random intercepts (still one by one):
+
+```{r}
+# Insert code to fit first model in Q5d model and print summary 
+M5d <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (mathprep | schoolid) + (1|schoolid/classid), data = dat)
+summary(M5d)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M5, M5d, refit = F)
+```
+
+    Response: Allowing the mathprep slopes to be correlated with the random intercepts is not justified. 
+
+```{r}
+# Insert code to fit second model in Q5d model and print summary 
+M5e <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (yearstea | schoolid) + (1|schoolid/classid), data = dat)
+summary(M5e)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M5, M5e, refit = F)
+```
+    
+    Response: Allowing the yearsteaching slopes to be correlated with the random intercepts is not justified. 
+
+```{r}
+# Insert code to fit third model in Q5b model and print summary
+M5f <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (mathknow | schoolid) + (1|schoolid/classid), data = dat)
+summary(M5f)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M5, M5f, refit = F)
+```
+
+    Response: Allowing the mathknowledge slopes to be correlated with the random intercepts is not justified. 
+
+### e. Report anything unusual about the variance components (changes that are in a direction you didn’t expect) and any potential explanation for why those changes occured (hint: what did you add to the model?).
+
+    Response:
+
+## Question 6.
+
+### a. Try to add a random slope for each student level predictor (varying at the classroom level; one by one - not all together)
+
+```{r}
+M6 <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +(1|schoolid)+(1|classid), data=dat)
+summary(M6)
+```
+
+```{r}
+# Insert code to compare models 
+M6a <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (0+ses|classid)+(1|schoolid)+(1|classid), data=dat)
+summary(M6a)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M6a, refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q7a model and print summary
+M6b <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (0+sex|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M6b)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M6b, refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q7a model and print summary 
+M6c <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (0+minority|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M6c)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M6c, refit = F)
+```  
+  
+    Response:  
+ 
+### b. Why is it a bad idea to include a classroom-level variable with random slopes at the classroom level?
+
+    Response:
+
+### c. Retry the above, allowing the slopes to be correlated with the random intercepts. Report findings.
+
+```{r}
+# Insert code to fit first model in Q6c model and print summary 
+M6d <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (ses|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M6d)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M6d, refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q6c model and print summary 
+M6e <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (minority|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M6e)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M6e, refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q6c model and print summary 
+M6f <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (minority|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M6f)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M6f, refit = F)
+```
+
+    Response:
+
+## Question 7.
+### a. Try to add a random slope for each student level predictor varying at the school level:
+
+```{r}
+# Insert code to fit first model in Q7a model and print summary 
+M7a <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (0+ses|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M7a)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M7a, refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q7a model and print summary
+M7b <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (0+sex|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M7b)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M7b,refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q7a model and print summary 
+M7c <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (0+minority|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M7c)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M7c, refit = F)
+```
+
+    Response:
+
+### b. Retry the above, allowing the slopes to be correlated with the random intercepts.
+
+```{r}
+# Insert code to fit first model in Q7b model and print summary 
+M7d <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (ses|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M7d)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M7d, refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q7b model and print summary 
+M7e <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (sex|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M7e)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M7e, refit = F)
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q7b model and print summary 
+M7f <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex +  (minority|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M7f)
+```
+
+```{r}
+# Insert code to compare models 
+anova(M6, M7f, refit = F)
+```
+
+    Response:
+
+### c. Report anything unusual about the variance components (changes that are unexpected)
+
+    Response:
+
+## Question 8.
+
+### a. Take the two predictors that had significant random slopes, in the forms in which they worked (indep. or correlated) and add both to the model, and test for need of one conditional on needing the other.
+
+```{r}
+# Fit models and run LRT tests 
+M8 <-lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex + (0+ses|schoolid)+(0+minority|schoolid)+(1|schoolid)+(1|classid), data=dat)
+summary(M8)
+```
+
+    Response: 
+
+### b. Is the more complex model (with both random slopes in it) justified?
+
+```{r}
+# Insert code to compare models 
+anova(M7c, M8, refit = F)
+rand(M8)
+```  
+
+    Reponse:
+
+### c. WRITE OUT THIS MODEL in your preferred notation  
+   
+    The model is:   
+
+##  Question 9.
+
+### a. For UMM, write down: V_S, V_C, V_E for the three variance components (simply the estimates)
+
+```{r}
+# If you want to look at your UMM insert code here or you can just do this in line 
+summary (M6)
+```
+    
+    V_S = 169.45
+    
+    V_C = 93.89
+    
+    V_E = 1064.96
+
+### b. For the most complicated (all fixed effects) random INTERCEPTS ONLY model, what are: V_C, V_S, V_E?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+summary(M8)
+```
+
+    V_S = 168.00
+    
+    V_C = 88.55
+    
+    V_E = 1035.12
+
+### c. By what fraction did these each decrease with the new predictors in the model?
+
+    V_S:(169.45-168.00)/169.45 = 0.01
+    
+    V_C: (93.89-88.55)/93.89 = 0.06
+    
+    V_E: (1064.96-1035.12)/1035.12=0.03
+
+## Question 10. Now consider the model with a random slope in ses.
+
+### a. What are:  V_C, V_S(ses=0), V_E ?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+summary (M7a)
+```
+
+    V_S(ses=0) = 72.0
+    
+    V_C =  88.56
+    
+    V_E = 103.11
+
+### b. What are: V_S(ses=-0.50), V_S(ses=+0.5) ?
+
+    V_S(ses=0.5) =
+    
+    V_S(ses=-0.5) = 
+
+## Question 11.
+### Now consider the model with a random slope in minority.
+
+### a. What are:  V_C, V_S(minority=0), V_E ?
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line  
+summary(M7c)
+```
+
+    V_S(minority=0) = 1.777e-06
+    
+    V_C = 9.388e+01
+    
+    V_E = 10665e+03
+
+### b. What are: V_S(minority=0.25), V_S(minority=+0.50), V_S(minority=+0.75) ?
+
+    V_S(minority=0.25) = 
+
+```{r}
+# V_S(minority = 0.25)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.5) = 
+
+```{r}
+# V_S(minority = 0.50)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.75) = 
+
+```{r}
+# V_S(minority = 0.75)
+# Insert code if you want to do the calculations in R 
+```
+
+## Question 12.
+### Now consider the model with a random slope in ses & minority.
+
+### a. What are: V_C, V_S(minority=0,ses=0), V_E ? We need to list ‘ses=0, minority=0’ here, or we don’t know how to use the slope variance
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line  
+```
+
+    V_S(sex=0, minority=0) = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. In the last model, what is a “likely” (+/- 1 sd) range for \(\eta\)~0jk~
+
+    Response: 
+
+### c. Can we make a similar statement about \(\zeta\)~0k~?
+
+    Response: 
+
+### d. If you had a large value for \(\eta\)~0jk~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority?
+
+    Response: 
+
+### e. If you had a large value for \(\zeta\)~0k~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority (discuss each separately)?
+
+    Response: 
