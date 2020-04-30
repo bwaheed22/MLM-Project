@@ -590,16 +590,16 @@ print(var_minority.75)
 
 ### b. In the last model, what is a “likely” (+/- 1 sd) range for \(\eta\)~0jk~
 
-    Response: [384.407, 424.633]
+    Response: [71.641, 89.599]
 
 ### c. Can we make a similar statement about \(\zeta\)~0k~?
 
-    Response: 
+    Response: No, because the variance for 
 
 ### d. If you had a large value for \(\eta\)~0jk~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority?
 
-    Response: 
+    Response: Any value because ther random slope terms are not related to classrooms.
 
 ### e. If you had a large value for \(\zeta\)~0k~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority (discuss each separately)?
 
-    Response: 
+    Response: We would expect a large value for the SES random slope term, and a small value for the minority random slope.
