@@ -1,0 +1,43 @@
+---
+title: "Untitled"
+author: "Jeffrey (Yi-Hung) Wang"
+date: "2020/4/30"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+#Plot for 5c
+p1 <- ggplot(classroom, aes(x=housepov, y=math1st, color = factor(schoolid))) + 
+  geom_point() +
+  #geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE)+
+  theme(legend.position = "none")+
+  ggtitle("")
+p1
+```
+
+
+```{r}
+#Plots for 6b
+p2 <- ggplot(classroom, aes(x=yearstea, y=math1st, color = factor(classid))) + 
+  geom_point() +
+  #geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE)+
+  theme(legend.position = "none")+
+  ggtitle("")
+
+p3 <- ggplot(classroom, aes(x=mathknow, y=math1st, color = factor(classid))) + 
+  geom_point() +
+  #geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE)+
+  theme(legend.position = "none")+
+  ggtitle("")
+
+p4 <- ggplot(classroom, aes(x=mathprep, y=math1st, color = factor(classid))) + 
+  geom_point( ) +
+  #geom_smooth(method=lm ,color = "red" ,fill="#69b3a2", se=TRUE)+
+  theme(legend.position = "none")+
+  ggtitle("")
+
+p2
+p3
+p4
+```
