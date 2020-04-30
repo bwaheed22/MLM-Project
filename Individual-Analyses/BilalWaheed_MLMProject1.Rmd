@@ -3,6 +3,8 @@ title: "MLM Final Project Part 1"
 date:  "`r format(Sys.time(), '%B %d %Y')`"
 output:
   pdf_document: default
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -214,6 +216,7 @@ anova(lm4, lm7, refit = F)
 ### c. Why is it a bad idea to include a random slope on the housepov effect?
 
     Response: 
+  It is not a good idea to add a random slope on the housepov effect because housepov is a school-level predictor and cannot vary at the classroom or individual level. Every individual would have the same *housepov* level within a school.
 
 ### d. Retry the above models, allowing the slopes to be correlated with the random intercepts (still one by one):
 
@@ -513,15 +516,11 @@ anova(lm4, lm_slopes3, refit = F)
 
 ### a. What are:  V_C, V_S(ses=0), V_E ?
 
-```{r}
-# If you want to look at your model insert code here or you can just do this in line 
-```
-
-    V_S(ses=0) = 
+    V_S(ses=0) = 168.00
     
-    V_C = 
+    V_C = 88.56
     
-    V_E = 
+    V_E = 1035.11
 
 ### b. What are: V_S(ses=-0.50), V_S(ses=+0.5) ?
 
@@ -534,15 +533,11 @@ anova(lm4, lm_slopes3, refit = F)
 
 ### a. What are:  V_C, V_S(minority=0), V_E ?
 
-```{r}
-# If you want to look at your model/variance components insert code here or you can just do this in line  
-```
-
-    V_S(minority=0) = 
+    V_S(minority=0) = 308.35
     
-    V_C = 
+    V_C = 86.71
     
-    V_E = 
+    V_E = 1039.37
 
 ### b. What are: V_S(minority=0.25), V_S(minority=+0.50), V_S(minority=+0.75) ?
 
@@ -576,11 +571,11 @@ anova(lm4, lm_slopes3, refit = F)
 # If you want to look at your model/variance components insert code here or you can just do this in line  
 ```
 
-    V_S(sex=0, minority=0) = 
+    V_S(sex=0, minority=0) = 401.766
     
-    V_C = 
+    V_C = 80.618
     
-    V_E = 
+    V_E = 1009.727
 
 ### b. In the last model, what is a “likely” (+/- 1 sd) range for \(\eta\)~0jk~
 
