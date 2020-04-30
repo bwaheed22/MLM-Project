@@ -425,7 +425,7 @@ anova(lm4, lm21, refit = F)
 ```
 
     Response:
-  The addition of random slope on the *minority* variable, varying by schools and allowing for correlation between the slope and intercept, is not significant (at the 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+  The addition of random slope on the *minority* variable, varying by schools and allowing for correlation between the slope and intercept, is significant (at the 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
 
 ```{r}
 lm22 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
