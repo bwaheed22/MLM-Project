@@ -1,0 +1,753 @@
+---
+title: "MLM Final Project Part 1"
+author: "Dennis Hilgendorf"
+date:  "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+###Load libraries
+if(!requireNamespace("readr"))
+  install.packages("readr", repos = "https://cloud.r-project.org")
+require("readr")
+
+if(!requireNamespace("ggplot2"))
+  install.packages("ggplot2", repos = "https://cloud.r-project.org")
+require("ggplot2")
+
+if(!requireNamespace("lme4"))
+  install.packages("lme4", repos = "https://cloud.r-project.org")
+require("lme4")
+
+if(!requireNamespace("lmerTest"))
+  install.packages("lmerTest", repos = "https://cloud.r-project.org")
+require("lmerTest")
+
+if(!requireNamespace("car"))
+  install.packages("car", repos = "https://cloud.r-project.org")
+require("car")
+```
+
+## Team Members and division of work: 
+
+## Question 0.
+### Load classroom.csv and create MATH1ST (fit all models using REML, use lmerTest::lmer)
+```{r}
+# Insert code to load data and create math1st variable 
+classroom <- read_csv("/Users/dennishilgendorf/Desktop/NYU MPH/Spring 2020 (Y2)/MLM/1/classroom.csv")
+
+attach(classroom)
+classroom$math1st <-  mathkind + mathgain
+
+save(classroom, file = "/Users/dennishilgendorf/Desktop/NYU MPH/Spring 2020 (Y2)/MLM/1/classroom.RData")
+
+```  
+
+## Question 1.
+### Estimate UMM model with random intercepts for both schools and classrooms. 
+```{r}
+# Insert code to fit model and print summary 
+
+M1_UMM <- lmerTest::lmer(math1st ~ (1 | schoolid/classid), data=classroom)
+summary(M1_UMM)
+```
+
+### a. Report the ICC for schools and classrooms:
+```{r}
+# Insert code if you'd like but you can also do this inline 
+```  
+
+    Response:
+    
+\(\hat{\sigma}^2_\eta\) = 85.47 
+\(\hat{\sigma}^2_\zeta\) = 280.69
+\(\hat{\sigma}^2_\varepsilon\) = 1146.79
+
+ICC for classrooms = \(\hat{\sigma}^2_\eta / (\hat{\sigma}^2_\eta + \hat{\sigma}^2_\zeta + \hat{\sigma}^2_\varepsilon)\) = (85.47)/(85.47 + 280.69 + 1146.79) = 5.65% is the proportion of variance explained by between classroom differences.
+
+ICC for schools = \(\hat{\sigma}^2_\zeta / (\hat{\sigma}^2_\eta + \hat{\sigma}^2_\zeta + \hat{\sigma}^2_\varepsilon)\) = (280.69)/(85.47 + 280.69 + 1146.79) = 18.55% is the proportion of variance explained by between school differences.
+      
+### b. Write out the model:
+      
+    Model 1 Equation: 
+    
+  \(MATH1ST_{ijk} = {b_0} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model. 
+
+## Question 2.
+### Add all school-level predictors:
+
+    Model 2 Equation:
+    
+ \(MATH1ST_{ijk} = {b_0} + {b_1HOUSEPOV_k} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model. 
+
+
+```{r}
+# Insert code to fit model and print summary 
+
+M2 <- lmerTest::lmer(math1st ~ housepov + (1 | schoolid/classid), data=classroom)
+summary(M2)
+
+```
+
+### a. Report if the additional predictors are justified:
+
+```{r}
+# Insert code to compare models 
+anova(M1_UMM, M2, refit = F)
+rand(M2)
+
+```
+  
+    Response: 
+The additional school level covariate of HOUSEPOV is justified because the p-value (p < 0.05) of the chi square ANOVE test is significant at the 0.05 alpha significance level suggesting the benefit of adding school level predictors showing significant difference in deviance from log likelihood of the model comparisons. The school level predictor of HOUSEPOV is also significant at the alpha 0.05 significance level (p-value = 0.0017).
+
+### b. Report the change to school variance:
+
+    Response: 
+Change in school variance (\(\hat{\sigma}^2_\zeta\)) changed from 280.69 in Model 1 (UMM null model) to 250.93 indicating that adding the covariate, HOUSEPOV, accounted for variance at the school level. 
+
+## Question 3: Add all class-level predictors
+
+    Model 3 Equation:
+    
+ \(MATH1ST_{ijk} = {b_0} + {b_1HOUSEPOV_k} + {b_2MATHKNOW_{jk}} + {b_3MATHPREP_{jk}} + {b_4YEARSTEA_{jk}} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model.   
+
+```{r}
+# Insert code to fit model and print summary 
+
+M3 <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + (1 | schoolid/classid), data=classroom)
+summary(M3)
+
+```
+
+### a. Report if adding the predictors is justified:
+
+```{r}
+# Insert code to compare models
+# Must compare blocks using subset as they are nested
+save.options <- options() 
+options(na.action = "na.pass")
+mm <- model.matrix(math1st ~ housepov + mathknow + mathprep + yearstea, data = classroom)
+in_sample <- apply(is.na(mm), 1, sum) == 0
+options(save.options)
+
+# re-fit mlms using only fully observed observations (no listwise deletions)
+
+M1a_UMM <- lmerTest::lmer(math1st ~ 1 + (1 | schoolid/classid), data=classroom, subset = in_sample)
+summary(M1a_UMM)
+
+M2a <- lmerTest::lmer(math1st ~ housepov + (1 | schoolid/classid), data=classroom, subset = in_sample)
+summary(M2a)
+
+M3a <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + (1 | schoolid/classid), data=classroom, subset = in_sample)
+summary(M3a)
+
+#anova of subsets using FML to compare fixed effects as a block
+anova(M1a_UMM, M3a, refit = T)
+anova(M2a, M3a, refit = T)
+
+
+```
+
+    Response:
+The addition of classroom level covariates of MATHKNOW MATHPREP and YEARSTEA is not justified because the p-value (p > 0.32) of the chi square ANOVA test is non-significant at the 0.05 alpha significance level suggesting the benefit of adding classroom level predictors jointly is non-significant in comparison to the previous model. This means that there is not a statistically significant difference in deviance from log likelihood of the model comparisons with the previous model. The addition of classroom level covariates is justified in comparison to the null model ( pvalue = 0.01073) at the 0.05 alpha signifiance level.
+
+### b. Report changes in class-level variance and individual variance:
+
+    Response: 
+Change in classroom level variance (\(\hat{\sigma}^2_\eta\)) changed from 85.47 in Model 1 (UMM null model) to 82.36 in Model 2 and finally to 94.36 in Model 3 indicating that adding the classroom level covariates increases classroom level variance.
+
+Change in individual level variance (\(\hat{\sigma}^2_\varepsilon\)) changed from 1146.79 in Model 1 (UMM null model) to 1146.96 in Model 2 and finally to 1136.43 in Model 3 indicating that adding the classroom level covariates reduced individual variance.
+
+### c. Give a potential reason to explain why individual variance but not class variance is reduced:
+
+    Response:
+Individual variance could be reduced by the addition of these classroom level covariates while classroom level variance is not reduced because classroom level covariates could explain more individual level variance (individuals varying within a classroom) and thus more of this variance is partitioned into the classroom level variance. This makes sense as individuals vary between classrooms (accounting for variance of the classroom) while also varying within a classroom.
+
+
+## Question 4.
+### Add all student-level predictors excepting mathgain and mathkind:
+
+
+```{r}
+# Insert code to fit model and print summary 
+M4 <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex + (1 | schoolid/classid), data=classroom)
+summary(M4)
+
+
+```
+    
+
+### a. Report if the block of predictors is justified:
+
+```{r}
+# Insert code to compare models 
+
+# Must compare blocks using subset as they are nested
+save.options <- options() 
+options(na.action = "na.pass")
+mm2 <- model.matrix(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex, data = classroom)
+in_sample <- apply(is.na(mm2), 1, sum) == 0
+options(save.options)
+
+# re-fit mlms using only fully observed observations (no listwise deletions)
+
+M1b_UMM <- lmerTest::lmer(math1st ~ 1 + (1 | schoolid/classid), data=classroom, subset = in_sample)
+summary(M1b_UMM)
+
+M2b <- lmerTest::lmer(math1st ~ housepov + (1 | schoolid/classid), data=classroom, subset = in_sample)
+summary(M2b)
+
+M3b <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + (1 | schoolid/classid), data=classroom, subset = in_sample)
+summary(M3b)
+
+M4b <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex + (1 | schoolid/classid), data=classroom, subset = in_sample)
+summary(M4b)
+
+#anova of subsets using FML to compare fixed effects as a block
+anova(M1b_UMM, M4b, refit = T)
+anova(M3b, M4b, refit = T)
+
+```
+
+    Response: 
+The addition of student level covariates of SES MINORITY and SEX is justified because the p-value (p < 0.05) of the chi square ANOVA test is significant at the 0.05 alpha significance level suggesting the benefit of adding classroom level predictors jointly is significant in comparison to the previous model. This means that there is  a statistically significant difference in deviance from log likelihood of the model comparisons with the previous model. The addition of classroom level covariates is also justified in comparison to the null model (pvalue < 0.05) at the 0.05 alpha signifiance level.
+
+### b. Report change in all variance components
+
+    Response: 
+Change in classroom level variance (\(\hat{\sigma}^2_\eta\)) changed from 85.47 in Model 1 (UMM null model) to 82.36 in Model 2 and finally to 94.36 in Model 3 to 93.89 in Model 4 with a marginal decrease in classroom level variance.
+
+Change in school variance (\(\hat{\sigma}^2_\zeta\)) changed from 280.69 in Model 1 (UMM null model) to 250.93 in Model 2 to 223.31 in Model 3 and finally to 169.45 in Model 4 with a decrease in school level variance observed after adding student level covariates in Model 4
+
+Change in individual student level variance (\(\hat{\sigma}^2_\varepsilon\)) changed from 1146.79 in Model 1 (UMM null model) to 1146.96 in Model 2 to 1136.43 in Model 3 and finally to 1064.96 in Model 4 indicating that student level variance decreased after adding student level covariates in Model 4.
+
+
+### c. Give a potential reason as to why the school variance drops from the last model:
+
+    Response: 
+One potential reason why the school variance drops from model 3 to model 4 after the addition of student level covariates is that more of the variance is accounted for by the student level covariates, which as a level 1 predictor also changes the partitioning of variance explained in the classroom and school levels. Put another way, within individual variance is explained by SES, MINORITY, and SEX which may be relatively similar between the schools in this sample resulting in a lower variance at the school level.
+
+### d. Write this model out:
+
+    Model 4 Equation: 
+    
+ \(MATH1ST_{ijk} = {b_0} + {b_1HOUSEPOV_k} + {b_2MATHKNOW_{jk}} + {b_3MATHPREP_{jk}} + {b_4YEARSTEA_{jk}} +  {b_5SES_{ijk}} + {b_6MINORITY_{ijk}} + {b_7SEX_{ijk}} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model.
+
+## Question 5.
+
+### a. Try to add a random slope for each teacher level predictor (varying at the school level; one by one separately - not all together)
+
+### b. Report the models and their fit.
+
+```{r}
+# Insert code to fit first model in Q5b model and print summary 
+M5 <- lmerTest::lmer(math1st~mathknow + (0+mathknow|schoolid)+(1|schoolid)+(1|classid),data=classroom)
+summary(M5)
+```
+
+```{r}
+# Insert code to compare models 
+
+#First without random slopes
+
+M5a <- lmerTest::lmer(math1st~mathknow + (1|schoolid/classid),data=classroom)
+summary(M5a)
+
+#Now with random slopes - M5
+
+anova(M5a, M5, refit = F)
+rand(M5)
+
+```
+
+    Response: 
+No observation of significant changes of mathknow across schools as p-value is not statistically significant (pvalue = 1.00), fail to reject the null hypothesis of the ANOVA test between the two models. The extremely small value for the estimate of \(\sigma_{\zeta_1}^2\) random slope estimate of mathknow also indicates little systematic variation across schools for mathknow.
+
+
+```{r}
+# Insert code to fit second model in Q5b model and print summary 
+
+M6 <- lmerTest::lmer(math1st~ mathprep + (0+mathprep|schoolid)+(1|schoolid)+(1|classid),data=classroom)
+summary(M6)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+#First without random slopes
+
+M6a <- lmerTest::lmer(math1st~mathprep + (1|schoolid/classid),data=classroom)
+summary(M6a)
+
+#Now with random slopes - M6
+
+anova(M6a, M6, refit = F)
+rand(M6)
+
+
+```
+
+    Response: 
+No observation of significant changes of mathprep across schools as p-value is not statistically significant (pvalue = 0.9982), fail to reject the null hypothesis of the ANOVA test between the two models. The extremely small value for the estimate of \(\sigma_{\zeta_1}^2\) random slope estimate of mathprep also indicates little systematic variation across schools for mathprep
+
+
+```{r}
+# Insert code to fit third model in Q5b model and print summary 
+M7 <- lmerTest::lmer(math1st~ yearstea + (0+yearstea|schoolid)+(1|schoolid)+(1|classid),data=classroom)
+summary(M7)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+#First without random slopes
+
+M7a <- lmerTest::lmer(math1st~yearstea + (1|schoolid/classid),data=classroom)
+summary(M7a)
+
+#Now with random slopes - M6
+
+anova(M7a, M7, refit = F)
+rand(M7)
+
+```
+
+    Response: 
+No observation of significant changes of yearstea across schools as p-value is not statistically significant (pvalue = 0.1991), fail to reject the null hypothesis of the ANOVA test between the two models. The extremely small value for the estimate of \(\sigma_{\zeta_1}^2\) random slope estimate of yearstea also indicates little systematic variation across schools for yearstea.
+
+### c. Why is it a bad idea to include a random slope on the housepov effect?
+>
+    Response: 
+It is a bad idea to include a random slope on the housepov effect because its variance is already being accounted for in the null model by including the differential effects of schoolid on the outcome math1st.
+
+### d. Retry the above models, allowing the slopes to be correlated with the random intercepts (still one by one):
+
+```{r}
+# Insert code to fit first model in Q5d model and print summary 
+
+M5_corr <- lmerTest::lmer(math1st~mathknow + (mathknow|schoolid) + (1|classid),data=classroom)
+summary(M5_corr)
+```
+
+```{r}
+# Insert code to compare models 
+
+anova(M5a, M5_corr, refit = F)
+rand(M5_corr)
+
+```
+
+    Response: 
+No observation of significant changes of mathknow across schools as p-value is not statistically significant (pvalue = 0.9974), fail to reject the null hypothesis of the ANOVA test between the two models indicating no need for additional 2 parameters for correlated random slopes compared to a random intercept model. 
+
+```{r}
+# Insert code to fit second model in Q5d model and print summary 
+
+M6_corr <- lmerTest::lmer(math1st~ mathprep + (mathprep|schoolid)+(1|classid),data=classroom)
+summary(M6_corr)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+anova(M6a, M6_corr, refit = F)
+rand(M6_corr)
+
+
+```
+
+    Response: 
+No observation of significant changes of mathprep across schools as p-value is not statistically significant (pvalue = 0.2194), fail to reject the null hypothesis of the ANOVA test between the two models indicating no need for additional 2 parameters for correlated random slopes compared to a random intercept model. 
+
+```{r}
+# Insert code to fit third model in Q5d model and print summary 
+M7_corr <- lmerTest::lmer(math1st~ yearstea + (yearstea|schoolid)+(1|classid),data=classroom)
+summary(M7_corr)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+anova(M7a, M7_corr, refit = F)
+rand(M7_corr)
+```
+
+    Response: 
+Observations show some significant changes of yearstea across schools as p-value is marginally statistically significant (pvalue = 0.053) indicating a potential need for additional 2 parameters for correlated random slopes compared to a random intercept model for yearstea.
+
+### e. Report anything unusual about the variance components (changes that are in a direction you didn’t expect) and any potential explanation for why those changes occured (hint: what did you add to the model?).
+
+    Response:
+Yearsteaching is statististically significantly varies across schools (alpha = 0.05) as it decreases variance at the classroom level and increases variance at the school level.
+
+
+## Question 6.
+
+### a. Try to add a random slope for each student level predictor (varying at the classroom level; one by one - not all together)
+
+```{r}
+# Insert code to fit first model in Q6a model and print summary 
+M8 <- lmerTest::lmer(math1st~ses + (0+ses|classid)+(1|schoolid)+(1|classid),data=classroom)
+summary(M8)
+```
+
+```{r}
+# Insert code to compare models 
+
+#First without random slopes
+
+M8a <- lmerTest::lmer(math1st~ses + (1|schoolid/classid),data=classroom)
+summary(M8a)
+
+#Now with random slopes - M5
+
+anova(M8a, M8, refit = F)
+rand(M8)
+
+```
+
+    Response: 
+No observation of significant changes of ses across schools as p-value is not statistically significant (pvalue = 0.2274), fail to reject the null hypothesis of the ANOVA test between the two models. The relatively small value for the estimate of \(\sigma_{\zeta_1}^2\) random slope estimate of ses also indicates some systematic variation across schools for ses but not enough for statistical significance justidying model preference in the ANOVA test.
+
+
+```{r}
+# Insert code to fit second model in Q6a model and print summary 
+
+M9 <- lmerTest::lmer(math1st~ minority + (0+minority|classid)+(1|schoolid)+(1|classid),data=classroom)
+summary(M9)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+#First without random slopes
+
+M9a <- lmerTest::lmer(math1st~minority + (1|schoolid/classid),data=classroom)
+summary(M9a)
+
+#Now with random slopes - M6
+
+anova(M9a, M9, refit = F)
+rand(M9)
+
+
+```
+
+    Response: 
+No observation of significant changes of minority across schools as p-value is not statistically significant (pvalue = 1.00), fail to reject the null hypothesis of the ANOVA test between the two models. The extremely small value for the estimate of \(\sigma_{\zeta_1}^2\) random slope estimate of minority also indicates little systematic variation across schools for minority.
+
+
+```{r}
+# Insert code to fit third model in Q6a model and print summary 
+M10 <- lmerTest::lmer(math1st~ sex + (0+sex|classid)+(1|schoolid)+(1|classid),data=classroom)
+summary(M10)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+#First without random slopes
+
+M10a <- lmerTest::lmer(math1st~sex + (1|schoolid/classid),data=classroom)
+summary(M10a)
+
+#Now with random slopes - M6
+
+anova(M10a, M10, refit = F)
+rand(M10)
+
+```
+
+    Response: 
+No observation of significant changes of sex across schools as p-value is not statistically significant (pvalue = 1.00), fail to reject the null hypothesis of the ANOVA test between the two models. The extremely small value for the estimate of \(\sigma_{\zeta_1}^2\) random slope estimate of sex also indicates little systematic variation across schools for sex.
+
+### b. Why is it a bad idea to include a classroom-level variable with random slopes at the classroom level?
+
+    Response:
+It is a bad idea to include a classroom level variable with random slopes at the classroom level because its variance is already being accounted for in the null model by including the differential effects of classid clustering on the outcome math1st.
+
+### c. Retry the above, allowing the slopes to be correlated with the random intercepts. Report findings.
+```{r}
+# Insert code to fit first model in Q5d model and print summary 
+
+M8_corr <- lmerTest::lmer(math1st~ ses + (ses|classid) + (1|schoolid),data=classroom)
+summary(M8_corr)
+```
+
+```{r}
+# Insert code to compare models 
+
+anova(M8a, M8_corr, refit = F)
+rand(M8_corr)
+
+```
+
+    Response: 
+No observation of significant changes of ses across schools as p-value is not statistically significant (pvalue = 0.3008), fail to reject the null hypothesis of the ANOVA test between the two models indicating no need for additional 2 parameters for correlated random slopes compared to a random intercept model. 
+
+```{r}
+# Insert code to fit second model in Q5d model and print summary 
+
+M9_corr <- lmerTest::lmer(math1st~ minority + (minority|classid)+(1|schoolid),data=classroom)
+summary(M9_corr)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+anova(M9a, M9_corr, refit = F)
+rand(M9_corr)
+
+
+```
+
+    Response: 
+No observation of significant changes of minority across schools as p-value is not statistically significant (pvalue = 0.1658), fail to reject the null hypothesis of the ANOVA test between the two models indicating no need for additional 2 parameters for correlated random slopes compared to a random intercept model. 
+
+```{r}
+# Insert code to fit third model in Q5d model and print summary 
+M10_corr <- lmerTest::lmer(math1st~ sex + (sex|classid)+(1|schoolid),data=classroom)
+summary(M10_corr)
+
+```
+
+```{r}
+# Insert code to compare models 
+
+anova(M10a, M10_corr, refit = F)
+rand(M10_corr)
+```
+
+    Response: 
+No observation of significant changes of sex across schools as p-value is not statistically significant (pvalue = 0.8949), fail to reject the null hypothesis of the ANOVA test between the two models indicating no need for additional 2 parameters for correlated random slopes compared to a random intercept model. 
+
+## Question 7.
+
+### a. Try to add a random slope for each student level predictor varying at the school level:
+
+```{r}
+# Insert code to fit first model in Q7a model and print summary
+
+
+
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q7a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q7a model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+### b. Retry the above, allowing the slopes to be correlated with the random intercepts.
+
+```{r}
+# Insert code to fit first model in Q7b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit second model in Q7b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+```{r}
+# Insert code to fit third model in Q7b model and print summary 
+```
+
+```{r}
+# Insert code to compare models 
+```
+
+    Response:
+
+### c. Report anything unusual about the variance components (changes that are unexpected)
+
+    Response:
+
+## Question 8.
+
+### a. Take the two predictors that had significant random slopes, in the forms in which they worked (indep. or correlated) and add both to the model, and test for need of one conditional on needing the other.
+
+```{r}
+# Fit models and run LRT tests 
+```
+
+    Response: 
+
+### b. Is the more complex model (with both random slopes in it) justified?
+
+```{r}
+# Insert code to compare models 
+```  
+
+    Reponse:
+
+### c. WRITE OUT THIS MODEL in your preferred notation  
+   
+    The model is:   
+
+##  Question 9.
+
+### a. For UMM, write down: V_S, V_C, V_E for the three variance components (simply the estimates)
+
+```{r}
+# If you want to look at your UMM insert code here or you can just do this in line 
+```
+    
+    V_S = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. For the most complicated (all fixed effects) random INTERCEPTS ONLY model, what are: V_C, V_S, V_E?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+```
+
+    V_S = 
+    
+    V_C = 
+    
+    V_E = 
+
+### c. By what fraction did these each decrease with the new predictors in the model?
+
+    V_S:
+    
+    V_C:
+    
+    V_E: 
+
+## Question 10. Now consider the model with a random slope in ses.
+
+### a. What are:  V_C, V_S(ses=0), V_E ?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+```
+
+    V_S(ses=0) = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. What are: V_S(ses=-0.50), V_S(ses=+0.5) ?
+
+    V_S(ses=0.5) =
+    
+    V_S(ses=-0.5) = 
+
+## Question 11.
+### Now consider the model with a random slope in minority.
+
+### a. What are:  V_C, V_S(minority=0), V_E ?
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line  
+```
+
+    V_S(minority=0) = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. What are: V_S(minority=0.25), V_S(minority=+0.50), V_S(minority=+0.75) ?
+
+    V_S(minority=0.25) = 
+
+```{r}
+# V_S(minority = 0.25)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.5) = 
+
+```{r}
+# V_S(minority = 0.50)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.75) = 
+
+```{r}
+# V_S(minority = 0.75)
+# Insert code if you want to do the calculations in R 
+```
+
+## Question 12.
+### Now consider the model with a random slope in ses & minority.
+
+### a. What are: V_C, V_S(minority=0,ses=0), V_E ? We need to list ‘ses=0, minority=0’ here, or we don’t know how to use the slope variance
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line  
+```
+
+    V_S(sex=0, minority=0) = 
+    
+    V_C = 
+    
+    V_E = 
+
+### b. In the last model, what is a “likely” (+/- 1 sd) range for \(\eta\)~0jk~
+
+    Response: 
+
+### c. Can we make a similar statement about \(\zeta\)~0k~?
+
+    Response: 
+
+### d. If you had a large value for \(\eta\)~0jk~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority?
+
+    Response: 
+
+### e. If you had a large value for \(\zeta\)~0k~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority (discuss each separately)?
+
+    Response: 
