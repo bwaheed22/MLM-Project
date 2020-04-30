@@ -1,0 +1,661 @@
+---
+title: "MLM Final Project Part 1"
+date:  "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+###Load libraries
+if(!requireNamespace("readr"))
+  install.packages("readr", repos = "https://cloud.r-project.org")
+require("readr")
+
+if(!requireNamespace("ggplot2"))
+  install.packages("ggplot2", repos = "https://cloud.r-project.org")
+require("ggplot2")
+
+if(!requireNamespace("lme4"))
+  install.packages("lme4", repos = "https://cloud.r-project.org")
+require("lme4")
+
+if(!requireNamespace("lmerTest"))
+  install.packages("lmerTest", repos = "https://cloud.r-project.org")
+require("lmerTest")
+
+if(!requireNamespace("car"))
+  install.packages("car", repos = "https://cloud.r-project.org")
+require("car")
+
+if(!requireNamespace("dplyr"))
+  install.packages("dplyr", repos = "https://cloud.r-project.org")
+require("dplyr")
+
+```
+
+## Team Members and division of work: 
+
+## Question 0.
+### Load classroom.csv and create MATH1ST (fit all models using REML, use lmerTest::lmer)
+```{r}
+# Insert code to load data and create math1st variable 
+classroom <- read_csv("/Users/dennishilgendorf/Desktop/NYU MPH/Spring 2020 (Y2)/MLM/1/classroom.csv")
+
+classroom <- classroom %>% mutate(math1st = mathkind + mathgain)
+
+save(classroom, file = "/Users/dennishilgendorf/Desktop/NYU MPH/Spring 2020 (Y2)/MLM/1/classroom.RData")
+
+```  
+
+## Question 1.
+### Estimate UMM model with random intercepts for both schools and classrooms. 
+```{r}
+# Insert code to fit model and print summary 
+
+M1_UMM <- lmerTest::lmer(math1st ~ (1 | schoolid/classid), data=classroom)
+summary(M1_UMM)
+```
+
+### a. Report the ICC for schools and classrooms:
+```{r}
+# Insert code if you'd like but you can also do this inline 
+```  
+
+    Response:
+    
+\(\hat{\sigma}^2_\eta\) = 85.47 
+\(\hat{\sigma}^2_\zeta\) = 280.69
+\(\hat{\sigma}^2_\varepsilon\) = 1146.79
+
+ICC for classrooms = \(\hat{\sigma}^2_\eta / (\hat{\sigma}^2_\eta + \hat{\sigma}^2_\zeta + \hat{\sigma}^2_\varepsilon)\) = (85.47)/(85.47 + 280.69 + 1146.79) = 5.65% is the proportion of variance explained by between classroom differences.
+
+ICC for schools = \(\hat{\sigma}^2_\zeta / (\hat{\sigma}^2_\eta + \hat{\sigma}^2_\zeta + \hat{\sigma}^2_\varepsilon)\) = (280.69)/(85.47 + 280.69 + 1146.79) = 18.55% is the proportion of variance explained by between school differences.
+      
+### b. Write out the model:
+      
+    Model 1 Equation: 
+    
+  \(MATH1ST_{ijk} = {b_0} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model with *i* representing students, *j* representing classrooms and *k* representing schools.
+
+## Question 2.
+### Add all school-level predictors:
+
+    Model 2 Equation:
+    
+ \(MATH1ST_{ijk} = {b_0} + {b_1HOUSEPOV_k} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model with *i* representing students, *j* representing classrooms and *k* representing schools.
+
+
+```{r}
+# Insert code to fit model and print summary 
+
+M2 <- lmerTest::lmer(math1st ~ housepov + (1 | schoolid/classid), data=classroom)
+summary(M2)
+
+```
+
+### a. Report if the additional predictors are justified:
+
+```{r}
+# Insert code to compare models 
+anova(M1_UMM, M2, refit = F)
+rand(M2)
+
+```
+  
+    Response: 
+The additional school level covariate of HOUSEPOV is justified because the p-value (p < 0.05) of the chi square ANOVA test is significant at the 0.05 alpha significance level suggesting the benefit of adding school level predictors showing significant difference in deviance from log likelihood of the model comparisons. The school level predictor of HOUSEPOV is also significant at the alpha 0.05 significance level (p-value = 0.0017).
+
+### b. Report the change to school variance:
+
+    Response: 
+Change in school variance (\(\hat{\sigma}^2_\zeta\)) changed from 280.69 in Model 1 (UMM null model) to 250.93 indicating that adding the covariate, HOUSEPOV, accounted for variance at the school level.
+
+ Change in $\sigma^2_\zeta = 250.93 - 280.69 = -29.76$
+
+## Question 3: Add all class-level predictors
+
+    Model 3 Equation:
+    
+ \(MATH1ST_{ijk} = {b_0} + {b_1HOUSEPOV_k} + {b_2MATHKNOW_{jk}} + {b_3MATHPREP_{jk}} + {b_4YEARSTEA_{jk}} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model with *i* representing students, *j* representing classrooms and *k* representing schools.
+
+```{r}
+# Insert code to fit model and print summary 
+
+M3 <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + (1 | schoolid/classid), data=classroom)
+summary(M3)
+
+```
+
+### a. Report if adding the predictors is justified:
+
+```{r}
+linearHypothesis(M3, c("mathknow", "mathprep", "yearstea"))
+
+```
+
+    Response:
+The addition of classroom level covariates of MATHKNOW MATHPREP and YEARSTEA is not justified because the p-value (p > 0.3233) of the WALD test is non-significant at the 0.05 alpha significance level suggesting the benefit of adding classroom level predictors jointly is non-significant in comparison to the previous model containing student level predictors.
+
+### b. Report changes in class-level variance and individual variance:
+
+    Response: 
+Change in classroom level variance (\(\hat{\sigma}^2_\eta\)) changed from 85.47 in Model 1 (UMM null model) to 82.36 in Model 2 and finally to 94.36 in Model 3 indicating that adding the classroom level covariates increases classroom level variance.
+
+Change in individual level variance (\(\hat{\sigma}^2_\varepsilon\)) changed from 1146.79 in Model 1 (UMM null model) to 1146.96 in Model 2 and finally to 1136.43 in Model 3 indicating that adding the classroom level covariates reduced individual variance.
+
+Change in $\sigma^2_\eta = 94.36 - 82.36 = 12.00$
+Change in $\sigma^2_\epsilon = 1136.43 - 1146.96 = -10.53$
+
+### c. Give a potential reason to explain why individual variance but not class variance is reduced:
+
+    Response:
+Adding the classroom-level predictors shows a potential misspecification of the model. The classroom level predictors can make it difficult to estimate the individual level variance (i.e overstated) due to individual outliers in classrooms that have a very small amount of students.
+> GO THROUGH RECORDING 
+
+## Question 4.
+### Add all student-level predictors excepting mathgain and mathkind:
+
+
+```{r}
+# Insert code to fit model and print summary 
+M4 <- lmerTest::lmer(math1st ~ housepov + mathknow + mathprep + yearstea + ses + minority + sex + (1 | schoolid/classid), data=classroom)
+summary(M4)
+
+
+```
+    
+
+### a. Report if the block of predictors is justified:
+
+```{r}
+# Insert code to compare models 
+
+linearHypothesis(M4, c("sex","minority", "ses"))
+```
+
+    Response: 
+The addition of student level covariates of SES MINORITY and SEX is justified because the p-value (p < 0.05) of the WALD test is significant at the 0.05 alpha significance level suggesting the benefit of adding student level predictors jointly is significant in comparison to the previous model containing school and classroom-level predictors.
+
+### b. Report change in all variance components
+
+    Response: 
+Change in classroom level variance (\(\hat{\sigma}^2_\eta\)) changed from 85.47 in Model 1 (UMM null model) to 82.36 in Model 2 and finally to 94.36 in Model 3 to 93.89 in Model 4 with a marginal decrease in classroom level variance.
+
+Change in school variance (\(\hat{\sigma}^2_\zeta\)) changed from 280.69 in Model 1 (UMM null model) to 250.93 in Model 2 to 223.31 in Model 3 and finally to 169.45 in Model 4 with a decrease in school level variance observed after adding student level covariates in Model 4
+
+Change in individual student level variance (\(\hat{\sigma}^2_\varepsilon\)) changed from 1146.79 in Model 1 (UMM null model) to 1146.96 in Model 2 to 1136.43 in Model 3 and finally to 1064.96 in Model 4 indicating that student level variance decreased after adding student level covariates in Model 4.
+
+Change in $\sigma^2_\zeta = 169.45 - 223.31 = -53.86$
+Change in $\sigma^2_\eta = 93.89 - 94.36 = -0.47$
+Change in $\sigma^2_\epsilon = 1064.96 - 1136.43 = -71.47$
+
+
+### c. Give a potential reason as to why the school variance drops from the last model:
+
+    Response: 
+The student-level predictors explain some variance at the school level. SES & Minority Status, and SEX composition of children vary between different schools and may impact math scores. For example, some schools located in poorer areas with a different demographic of students will have much different individual math scores than those in more affluent areas.
+
+### d. Write this model out:
+
+    Model 4 Equation: 
+    
+ \(MATH1ST_{ijk} = {b_0} + {b_1HOUSEPOV_k} + {b_2MATHKNOW_{jk}} + {b_3MATHPREP_{jk}} + {b_4YEARSTEA_{jk}} +  {b_5SES_{ijk}} + {b_6MINORITY_{ijk}} + {b_7SEX_{ijk}} + \eta_{jk} + \zeta_k+ \varepsilon_{ijk}\) with normality assumptions of \(\zeta_k \sim N(0,\sigma_\zeta^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\) and \(\eta_{jk} \sim N(0,\sigma_\eta^2)\) \({\varepsilon_{ijk}},{\zeta_{0k}},{\eta_{jk}}\) assumed independent for random terms in the model with *i* representing students, *j* representing classrooms and *k* representing schools.
+
+## Question 5.
+
+### a. Try to add a random slope for each teacher level predictor (varying at the school level; one by one separately - not all together)
+
+### b. Report the models and their fit.
+
+```{r}
+M5 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + yearstea | schoolid) + (1|schoolid/classid), data = classroom)
+
+summary(M5)
+```
+
+```{r}
+anova(M4,M5, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *yearstea* variable is not significant (p-value = 0.9336) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+
+```{r}
+M6 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + mathknow | schoolid) + (1|schoolid/classid), data = classroom)
+
+summary(M6)
+```
+
+```{r}
+anova(M4, M6, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *mathknow* variable is not significant (p-value = 1.00) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M7 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + mathprep | schoolid) + (1|schoolid/classid), data = classroom)
+summary(M7)
+```
+
+```{r}
+anova(M4, M7, refit = F)
+```
+
+    Response: 
+  The addition of random slope on the *mathprep* variable is not significant (p-value = 1.00) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+### c. Why is it a bad idea to include a random slope on the housepov effect?
+
+    Response: 
+It is a bad idea to include a random slope on the housepov effect because its variance is already being accounted for in the null model by including the differential effects of schoolid on the outcome math1st.
+
+> INSERT JEFFREY PLOT
+
+### d. Retry the above models, allowing the slopes to be correlated with the random intercepts (still one by one):
+
+```{r}
+M8 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (yearstea | schoolid) + (1|schoolid/classid), data = classroom)
+
+summary(M8)
+```
+
+```{r}
+anova(M4, M8, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *yearstea* variable, allowing the random slope to be correlated with the random intercept, is not significant (p-value = 0.1204) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M9 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (mathknow| schoolid) + (1|schoolid/classid), data = classroom)
+
+summary(M9)
+```
+
+```{r}
+anova(M4, M9, refit = F)
+```
+    
+    Response: 
+  The addition of random slope on the *mathknow* variable, allowing the random slope to be correlated with the random intercept, is not significant (p-value = 1.00) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M10 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (mathprep| schoolid) + (1|schoolid/classid), data = classroom)
+
+summary(M10)
+```
+
+```{r}
+anova(M4, M10, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *mathprep* variable, allowing the random slope to be correlated with the random intercept, is not significant (p-value=0.1859) (at the 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+### e. Report anything unusual about the variance components (changes that are in a direction you didn’t expect) and any potential explanation for why those changes occured (hint: what did you add to the model?).
+
+    Response:
+>Yearsteaching is statististically significantly varies across schools (alpha = 0.05) as it decreases variance at the classroom level and increases variance at the school level.
+
+
+## Question 6.
+
+### a. Try to add a random slope for each student level predictor (varying at the classroom level; one by one - not all together)
+
+```{r}
+M11 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + sex | classid) + (1|schoolid/classid), data = classroom)
+summary(M11)
+```
+
+```{r}
+anova(M4, M11, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *sex* variable, varying by classrooms, is not significant (p-value = 1.00) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M12 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + minority | classid) + (1|schoolid/classid), data = classroom)
+summary(M12)
+```
+
+```{r}
+anova(M4, M12, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *minority* variable, varying by classrooms, is not significant (p-value = 0.9999) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M13 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + ses | classid) + (1|schoolid/classid), data = classroom)
+summary(M13)
+```
+
+```{r}
+anova(M4, M13, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *ses* variable, varying by classrooms, is not significant (p-value = 0.2063) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+    
+### b. Why is it a bad idea to include a classroom-level variable with random slopes at the classroom level?
+
+    Response:
+It is a bad idea to include a classroom level variable with random slopes at the classroom level because its variance is already being accounted for in the null model by including the differential effects of classid clustering on the outcome math1st.
+
+>Include plot JEFFREY
+
+
+### c. Retry the above, allowing the slopes to be correlated with the random intercepts. Report findings.
+
+```{r}
+M14 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (sex | classid) + (1|schoolid/classid), data = classroom)
+summary(M14)
+```
+
+```{r}
+anova(M4, M14, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *sex* variable, varying by classrooms and allowing for correlation between the random slope and random intercept, is not significant (p-value = 0.9188) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M15 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (minority | classid) + (1|schoolid/classid), data = classroom)
+summary(M15)
+```
+
+```{r}
+anova(M4, M15, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *minority* variable, varying by classrooms and allowing for correlation between random slope and random intercept, is not significant (p-value=0.3623) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M16 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (ses | classid) + (1|schoolid/classid), data = classroom)
+summary(M16)
+```
+
+```{r}
+anova(M4, M16, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *ses* variable, varying by classrooms and allowing for correlation between the random slope and random intercept, is not significant (p-value=0.6601) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+  
+## Question 7.
+
+### a. Try to add a random slope for each student level predictor varying at the school level:
+```{r}
+M17 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + sex | schoolid) + (1|schoolid/classid), data = classroom)
+summary(M17)
+```
+
+```{r}
+anova(M4, M17, refit = F)
+```
+
+    Response:
+   The addition of random slope on the *sex* variable, varying by schools, is not significant (p-value=0.4334) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M18 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + minority | schoolid) + (1|schoolid/classid), data = classroom)
+summary(M18)
+```
+
+```{r}
+anova(M4, M18, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *minority* variable, varying by schools, is not significant (p-value=1.00) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M19 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + ses | schoolid) + (1|schoolid/classid), data = classroom)
+summary(M19)
+```
+
+```{r}
+anova(M4, M19, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *ses* variable, varying by schools, is significant (p-value = 0.03021) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+### b. Retry the above, allowing the slopes to be correlated with the random intercepts.
+
+```{r}
+M20 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (sex | schoolid) + (1|schoolid/classid), data = classroom)
+summary(M20)
+```
+
+```{r}
+anova(M4, M20, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *sex* variable, varying by schools and allowing for correlation between the random slope and random intercept, is not significant (p-value=0.6013) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M21 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (minority | schoolid) + (1|schoolid/classid), data = classroom)
+summary(M21)
+```
+
+```{r}
+anova(M4, M21, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *minority* variable, varying by schools and allowing for correlation between the random slope and random intercept, is significant (p-value= 0.007497) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+```{r}
+M22 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (ses | schoolid) + (1|schoolid/classid), data = classroom)
+summary(M22)
+```
+
+```{r}
+anova(M4, M22, refit = F)
+```
+
+    Response:
+  The addition of random slope on the *ses* variable, varying by schools and allowing for correlation between the random slope and random intercept, is not significant (p-value=0.1954) (at the alpha 0.05 level of significance), according to the ANOVA LRT comparing the model with and without the random slope addition.
+
+    Response:
+
+### c. Report anything unusual about the variance components (changes that are unexpected)
+
+> Minority random slope when allowing for correlation between random slope and random intercept is statistically significant 
+
+    Response:
+
+## Question 8.
+
+### a. Take the two predictors that had significant random slopes, in the forms in which they worked (indep. or correlated) and add both to the model, and test for need of one conditional on needing the other.
+
+```{r}
+# Fit models and run LRT tests 
+Mslope1 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + ses | schoolid) + (1|schoolid/classid), data = classroom)
+Mslope2 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (minority | schoolid) + (1|schoolid/classid), data = classroom)
+Mslope3 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
+              sex + minority + ses + (0 + ses | schoolid)+ (minority | schoolid) + (1|schoolid/classid), data = classroom)
+
+anova(Mslope3, Mslope1, refit = F)
+anova(Mslope3, Mslope2, refit = F)
+```
+
+    Response: 
+The addition of the random slopes on the two predictors *ses* and *minority* with *ses* random slope not correlated with *ses* random intercept and *minority* random slope correlated with *minority* random intercept is significant (p-value = 0.00616, p-value= 0.02365) (at the alpha 0.05 significance level) and are needed based on the LRT comparing the need of one random slope, conditional on needing the other.
+
+### b. Is the more complex model (with both random slopes in it) justified?
+
+```{r}
+# Insert code to compare models 
+anova(Mslope3, M4)
+
+```  
+
+    Reponse:
+The addition of the random slopes on the two predictors *ses* and *minority* with *ses* random slope not correlated with *ses* random intercept and *minority* random slope correlated with *minority* random intercept is significant (p-value = 0.002258) (at the alpha 0.05 significance level) meaning that the more complex model with both random slopes is justified based on the LRT comparing the complex model with the random intercepts only model.
+
+### c. WRITE OUT THIS MODEL in your preferred notation  
+   
+    The model is:   
+ \(MATH1ST_{ijk} = {b_0} + {b_1HOUSEPOV_k} + {b_2MATHKNOW_{jk}} + {b_3MATHPREP_{jk}} + {b_4YEARSTEA_{jk}} +  {b_5SES_{ijk}} + {b_6MINORITY_{ijk}} + {b_7SEX_{ijk}} + \eta_0{jk} + \zeta_0k + \zeta_{5k}SES + \zeta_{6k}MINORITY + \varepsilon_{ijk}\) with normality assumptions of \(\zeta_{0k} \sim N(0,\sigma_{\zeta0}^2)\),\(\varepsilon_{ijk} \sim N(0,\sigma_\varepsilon^2)\), \(\eta_{0jk} \sim N(0,\sigma_{\eta0}^2)\), \(\zeta_{5k} \sim N(0,\sigma_{\zeta5}^2)\), \(\zeta_{6k} \sim N(0,\sigma_{\zeta6}^2)\) and all assumed independent for random terms in the model with *i* representing students, *j* representing classrooms and *k* representing schools.
+
+##  Question 9.
+
+### a. For UMM, write down: V_S, V_C, V_E for the three variance components (simply the estimates)
+
+```{r}
+# If you want to look at your UMM insert code here or you can just do this in line 
+summary(M1_UMM)
+
+```
+    
+    V_S = 280.68
+    
+    V_C = 85.46
+    
+    V_E = 1146.80
+
+### b. For the most complicated (all fixed effects) random INTERCEPTS ONLY model, what are: V_C, V_S, V_E?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+summary(M4)
+
+```
+
+    V_S = 169.45
+    
+    V_C = 93.89
+    
+    V_E = 1064.96
+
+### c. By what fraction did these each decrease with the new predictors in the model?
+
+    V_S: 39.63% decrease
+    
+    V_C: 9.85% increase
+    
+    V_E: 7.14% decrease
+
+## Question 10. Now consider the model with a random slope in ses.
+
+### a. What are:  V_C, V_S(ses=0), V_E ?
+
+```{r}
+# If you want to look at your model insert code here or you can just do this in line 
+summary(Mslope1)
+
+```
+
+    V_S(ses=0) = 167.98
+    
+    V_C = 88.56
+    
+    V_E = 1035.12
+
+### b. What are: V_S(ses=-0.50), V_S(ses=+0.5) ?
+
+    V_S(ses=0.5) =
+    
+    V_S(ses=-0.5) = 
+
+## Question 11.
+### Now consider the model with a random slope in minority.
+
+### a. What are:  V_C, V_S(minority=0), V_E ?
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line
+summary(Mslope2)
+```
+
+    V_S(minority=0) = 308.34+72.86 = 381.2 (correlated)
+    
+    V_C = 86.70
+    
+    V_E = 1039.39
+
+### b. What are: V_S(minority=0.25), V_S(minority=+0.50), V_S(minority=+0.75) ?
+
+    V_S(minority=0.25) = 
+
+```{r}
+# V_S(minority = 0.25)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.5) = 
+
+```{r}
+# V_S(minority = 0.50)
+# Insert code if you want to do the calculations in R 
+```
+
+    V_S(minority=0.75) = 
+
+```{r}
+# V_S(minority = 0.75)
+# Insert code if you want to do the calculations in R 
+```
+
+## Question 12.
+### Now consider the model with a random slope in ses & minority.
+
+### a. What are: V_C, V_S(minority=0,ses=0), V_E ? We need to list ‘ses=0, minority=0’ here, or we don’t know how to use the slope variance
+
+```{r}
+# If you want to look at your model/variance components insert code here or you can just do this in line
+summary(Mslope3)
+```
+
+    V_S(sex=0, minority=0) = 346.60+57.93 = 404.53
+    
+    V_C = 80.62
+    
+    V_E = 1009.73
+
+### b. In the last model, what is a “likely” (+/- 1 sd) range for \(\eta\)~0jk~
+
+    Response: 
+
+### c. Can we make a similar statement about \(\zeta\)~0k~?
+
+    Response: 
+
+### d. If you had a large value for \(\eta\)~0jk~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority?
+
+    Response: 
+
+### e. If you had a large value for \(\zeta\)~0k~, would you expect a large or small or “any” value for the two random slope terms, \(\zeta\)~1k~ and \(\zeta\)~2k~ for ses and minority (discuss each separately)?
+
+    Response: 
