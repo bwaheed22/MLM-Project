@@ -222,7 +222,7 @@ anova(lm4, lm7, refit = F)
 
 ```{r}
 lm8 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (yearstea | schoolid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (yearstea | schoolid) + (1|classid), data = classroom)
 
 summary(lm8)
 ```
@@ -236,7 +236,7 @@ anova(lm4, lm8, refit = F)
 
 ```{r}
 lm9 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (mathknow| schoolid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (mathknow| schoolid) + (1|classid), data = classroom)
 
 summary(lm9)
 ```
@@ -250,7 +250,7 @@ anova(lm4, lm9, refit = F)
 
 ```{r}
 lm10 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (mathprep| schoolid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (mathprep| schoolid) + (1| classid), data = classroom)
 
 summary(lm10)
 ```
@@ -299,7 +299,7 @@ anova(lm4, lm12, refit = F)
 
 ```{r}
 lm13 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (0 + ses | classid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (0 + ses | classid) + (1| schoolid/classid), data = classroom)
 summary(lm13)
 ```
 
@@ -319,7 +319,7 @@ anova(lm4, lm13, refit = F)
 
 ```{r}
 lm14 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (sex | classid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (sex | classid) + (1|schoolid), data = classroom)
 summary(lm14)
 ```
 
@@ -332,7 +332,7 @@ anova(lm4, lm14, refit = F)
 
 ```{r}
 lm15 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (minority | classid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (minority | classid) + (1|schoolid), data = classroom)
 summary(lm15)
 ```
 
@@ -345,7 +345,7 @@ anova(lm4, lm15, refit = F)
 
 ```{r}
 lm16 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (ses | classid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (ses | classid) + (1 | schoolid), data = classroom)
 summary(lm16)
 ```
 
@@ -403,7 +403,7 @@ anova(lm4, lm19, refit = F)
 
 ```{r}
 lm20 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (sex | schoolid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (sex | schoolid) + (1| schoolid:classid), data = classroom)
 summary(lm20)
 ```
 
@@ -416,7 +416,7 @@ anova(lm4, lm20, refit = F)
 
 ```{r}
 lm21 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (minority | schoolid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (minority | schoolid) + (1| schoolid:classid), data = classroom)
 summary(lm21)
 ```
 
@@ -429,7 +429,7 @@ anova(lm4, lm21, refit = F)
 
 ```{r}
 lm22 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + 
-              sex + minority + ses + (ses | schoolid) + (1|schoolid/classid), data = classroom)
+              sex + minority + ses + (ses | schoolid) + (1| schoolid:classid), data = classroom)
 summary(lm22)
 ```
 
@@ -455,9 +455,9 @@ anova(lm4, lm22, refit = F)
 lm_slopes1 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority +  
     ses + (0 + ses | schoolid) + (1 | schoolid/classid), data = classroom)
 lm_slopes2 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority +  
-    ses + (minority | schoolid) + (1 | schoolid/classid), data = classroom)
+    ses + (minority | schoolid) + (1 | classid), data = classroom)
 lm_slopes3 <- lmer(math1st ~ housepov + yearstea + mathknow + mathprep + sex + minority +  
-    ses + (0 + ses | schoolid) + (minority | schoolid) +(1 | schoolid/classid), data = classroom)
+    ses + (0 + ses | schoolid) + (minority | schoolid) + (1 | classid), data = classroom)
 
 anova(lm_slopes3, lm_slopes2, refit = F)
 anova(lm_slopes3, lm_slopes1, refit = F)
@@ -473,7 +473,7 @@ anova(lm4, lm_slopes3, refit = F)
 ```  
 
     Reponse:
-  The complex model with both random slopes is justified, with a p-value of 0.001859.
+  The complex model with both random slopes is justified, with a p-value of 0.0006782.
 
 ### c. WRITE OUT THIS MODEL in your preferred notation  
    
@@ -524,20 +524,20 @@ anova(lm4, lm_slopes3, refit = F)
 
 ### b. What are: V_S(ses=-0.50), V_S(ses=+0.5) ?
 
-    V_S(ses=0.5) =
+    V_S(ses=0.5) = 168 + (0.5^2)*(72.50) = 186.125
     
-    V_S(ses=-0.5) = 
+    V_S(ses=-0.5) = 168 + (-0.5^2)*(72.50) = 186.125
 
 ## Question 11.
 ### Now consider the model with a random slope in minority.
 
 ### a. What are:  V_C, V_S(minority=0), V_E ?
 
-    V_S(minority=0) = 308.35
+    V_S(minority=0) = 381.2
     
     V_C = 86.71
     
-    V_E = 1039.37
+    V_E = 1039.4
 
 ### b. What are: V_S(minority=0.25), V_S(minority=+0.50), V_S(minority=+0.75) ?
 
@@ -545,21 +545,36 @@ anova(lm4, lm_slopes3, refit = F)
 
 ```{r}
 # V_S(minority = 0.25)
-# Insert code if you want to do the calculations in R 
+
+# Calculate variance using the formula:
+# V_S(minority = 0.25) = Var(Zeta_0) + Minority^2*Var(Zeta_1) + 2*Minority*CoV(Zeta_0,Zeta_1)
+
+var_minority.25 = 381.2 + (0.25^2)*(343.2) + 2*0.25*(18.525*19.524*-0.83)
+print(var_minority.25)
 ```
 
     V_S(minority=0.5) = 
 
 ```{r}
 # V_S(minority = 0.50)
-# Insert code if you want to do the calculations in R 
+
+# Calculate variance using the formula:
+# V_S(minority = 0.50) = Var(Zeta_0) + Minority^2*Var(Zeta_1) + 2*Minority*CoV(Zeta_0,Zeta_1)
+
+var_minority.50 = 381.2 + (0.50^2)*(343.2) + 2*0.50*(18.525*19.524*-0.83)
+print(var_minority.50)
 ```
 
     V_S(minority=0.75) = 
 
 ```{r}
 # V_S(minority = 0.75)
-# Insert code if you want to do the calculations in R 
+
+# Calculate variance using the formula:
+# V_S(minority = 0.75) = Var(Zeta_0) + Minority^2*Var(Zeta_1) + 2*Minority*CoV(Zeta_0,Zeta_1)
+
+var_minority.75 = 381.2 + (0.75^2)*(343.2) + 2*0.75*(18.525*19.524*-0.83)
+print(var_minority.75)
 ```
 
 ## Question 12.
@@ -567,19 +582,15 @@ anova(lm4, lm_slopes3, refit = F)
 
 ### a. What are: V_C, V_S(minority=0,ses=0), V_E ? We need to list ‘ses=0, minority=0’ here, or we don’t know how to use the slope variance
 
-```{r}
-# If you want to look at your model/variance components insert code here or you can just do this in line  
-```
-
-    V_S(sex=0, minority=0) = 401.766
+    V_S(sex=0, minority=0) = 404.52
     
-    V_C = 80.618
+    V_C = 80.62
     
-    V_E = 1009.727
+    V_E = 1009.73
 
 ### b. In the last model, what is a “likely” (+/- 1 sd) range for \(\eta\)~0jk~
 
-    Response: 
+    Response: [384.407, 424.633]
 
 ### c. Can we make a similar statement about \(\zeta\)~0k~?
 
