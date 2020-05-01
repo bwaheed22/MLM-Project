@@ -1,0 +1,259 @@
+---
+title: "MLM Mini Project"
+date:  "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  pdf_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+###Load libraries
+if(!requireNamespace("here"))
+  install.packages("here", repos = "https://cloud.r-project.org")
+require("here")
+
+if(!requireNamespace("lme4"))
+  install.packages("lme4", repos = "https://cloud.r-project.org")
+require("lme4")
+
+if(!requireNamespace("lmerTest"))
+  install.packages("lmerTest", repos = "https://cloud.r-project.org")
+require("lmerTest")
+
+options(scipen = 999)
+```
+
+## Team Members and division of work: 
+
+```{r}
+# Insert code to set.seed
+set.seed(2042001)
+```
+
+
+### Question 1:
+You will generate simulated data for a single school with 100 classrooms, each of which has 200 students. 
+
+  a. Outcome for student $i$ in classroom $j$: $Y_{ij}$.
+    
+  b. There is a single predictor, $X_{ij} \sim U(0,1)$ (uniform on [0,1])
+    
+  c. There is a classroom random effect, $\eta_j \sim N(0,\sigma^2_{\eta})$, where $\sigma^2_{\eta} = 2$. 
+  
+  d. Subject level error, $\varepsilon_{ij} \sim N(0, \sigma^2_{\varepsilon})$, where  $\sigma^2_{\varepsilon} = 2$. 
+  
+  e. `set.seed(2042001)` once at the beginning of your code.
+  
+  f. Generate the random quantities in this order to ensure the same solution for everyone: X, $\eta_j$, $\varepsilon_{ij}$ 
+  
+  g. The outcome has the following form (DGP, given the modeling parameters above):
+$$Y_{ij} = 0 + 1X_{ij} + \eta_j + \varepsilon_{ij} ; \mbox{     } \eta_j \sim N(0,\sigma^2_{\eta}), \varepsilon_{ij} \sim N(0, \sigma^2_{\varepsilon}), indep. $$
+h. Generate a single simulated dataset (you will need a "classid" variable to track classrooms); you can optionally assign a "studentid")
+  i. **Important:** construct classid such that classrooms appear consecutively within the dataframe. As per: `rep(1:J,each=n_j)`
+  
+  
+```{r}
+# Insert code to generate data and outcome variable, store variables in a dataframe
+
+# set size assumptions
+n.classrooms <- 100
+n.stu.per.class <- 200
+
+# generate data
+X_ij <- runif(n.classrooms * n.stu.per.class, min = 0, max = 1)
+eta_j <- rnorm(n.classrooms, mean = 0, sd = 2)
+epsilon_ij <- rnorm(n.classrooms * n.stu.per.class, mean = 0, sd = 2)
+
+# calculate outcome variable REVIEW THIS DGP !!!!!!!!!!!
+Y_ij <- 0 + 1*X_ij + rep(eta_j, each = n.stu.per.class) + epsilon_ij
+
+# store variables in dataframe
+dat <- data.frame(
+  studentid = 1:(n.classrooms * n.stu.per.class),
+  classid = rep(1:n.stu.per.class, each = n.classrooms),
+  predictor = X_ij,
+  outcome = Y_ij
+)
+```
+
+  
+### Question 2:  REVIEW THIS MODEL !!!!!!!!!!!
+Fit the model corresponding to the DGP on your simulated data.
+```{r}
+# Insert code to fit model and print summary
+lm1 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat, REML = TRUE)
+summary(lm1)
+```
+
+a. Report coefficient estimate for slope on X.
+
+    Response: 
+
+b. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
+
+```{r}
+# Insert code to compute confidence interval 
+coefs <- summary(lm1)$coefficients
+lower <- coefs[2,1] - (coefs[2,2] * 2)
+upper <- coefs[2,1] + (coefs[2,2] * 2)
+print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+```
+
+    Response:
+    
+### Question 3:
+3. Next, we simulate missing data in several ways. This is the first:
+a. Make a copy of the data, then modify the copy following these instructions:
+```{r}
+# Insert code to make a copy of the data
+dat2 <- dat
+```
+
+b. Generate $Z_{ij} \sim$ Bernoulli$(p)$, with $p = 0.5$
+c. Set Y to NA when $Z_{ij} == 1$. This should look a lot like "MCAR" missingness.
+```{r}
+# Insert code the generate your data
+Z_ij <- rbinom(n = n.classrooms*n.stu.per.class, size = 1, prob = 0.5)
+dat2$outcome <- ifelse(Z_ij == 1, NA, dat2$outcome)
+```
+
+d. Refit the model on the new data and report the coefficient estimate for slope on X. Look at the other parameter estimates as well.
+```{r}
+# Insert code to fit model and compute confidence interval
+lme2 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat2)
+summary(lme2)
+
+# calculate confidence band
+coefs <- summary(lme2)$coefficients
+lower <- coefs[2,1] - (coefs[2,2] * 2)
+upper <- coefs[2,1] + (coefs[2,2] * 2)
+print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+```
+
+e. Do you see any real change in the $\beta_X$ estimate? **comment**
+    i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data?
+    
+    Response: 
+
+f. What is the total sample size $N$ used in the model fit? **comment**
+
+```{r}
+# number of observations used
+sum(!is.na(dat2$outcome))
+length(summary(lme2)$residuals)
+
+# number of groups used
+summary(lme2)$ngrps
+```
+
+    Response:
+    
+### Question 4: 
+Missing Data II: Make another copy of the original data, then modify the copy as follows:
+a. Generate $Z_{ij} \sim$ Bernoulli$(X_{ij})$, with $X_{ij}$ your predictor generated previously.
+b. Set Y to NA when $Z_{ij} == 1$. This should look a lot like "MAR" missingness.
+```{r}
+# Insert code the generate your data
+dat3 <- dat
+Z_ij <- rbinom(n = n.classrooms*n.stu.per.class, size = 1, prob = dat3$predictor)
+dat3$outcome <- ifelse(Z_ij == 1, NA, dat3$outcome)
+```
+c. Refit the model on the new data and report the coefficient estimate for slope on X. Look at the other parameter estimates as well. **comment**
+```{r}
+# Insert code to fit model and compute confidence interval
+lme3 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat3)
+summary(lme3)
+
+# calculate confidence band
+coefs <- summary(lme3)$coefficients
+lower <- coefs[2,1] - (coefs[2,2] * 2)
+upper <- coefs[2,1] + (coefs[2,2] * 2)
+print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+```
+
+    Response: 
+
+d. Do you see any real change in the $\beta_X$ estimate?
+    i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
+    
+    Response:
+
+e. What is the total sample size $N$ used in the model fit? **comment**
+
+```{r}
+# number of observations used
+sum(!is.na(dat3$outcome))
+length(summary(lme3)$residuals)
+
+# number of groups used
+summary(lme3)$ngrps
+```
+
+    Response:
+
+### Question 5: 
+Missing Data III: Make another copy of the original data, then modify the copy as follows:
+```{r}
+# Insert code to make a copy of the original data
+dat4 <- dat
+```
+
+a. First, define the expit function: `expit <- function(x) exp(x)/(1+exp(x))`
+```{r}
+# Insert code to define expit function
+expit <- function(x) exp(x)/(1 + exp(x))
+```
+
+b. Generate $Z_{ij} \sim$ Bernoulli$(expit(Y_{ij}))$, with $Y_{ij}$ your *outcome* generated previously. 
+
+c. Set Y to NA when $Z_{ij} == 1$. This should look like a violation of "MAR" missingness (missingness depedents on outcome and cannot be *simply* predicted with the predictor set -- Y should be correlated with X, though, so it might not be too bad a violation). 
+```{r}
+# Insert code the generate your data
+Z_ij <- rbinom(n = n.classrooms*n.stu.per.class, size = 1, prob = expit(dat4$outcome))
+dat4$outcome <- ifelse(Z_ij == 1, NA, dat4$outcome)
+```
+
+d. Refit the model on the new data and report the coefficient estimate for slope on X. Look at the other parameter estimates as well. **comment**
+```{r}
+# Insert code to fit model and compute confidence interval
+lme4 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat4)
+summary(lme4)
+
+# calculate confidence band
+coefs <- summary(lme4)$coefficients
+lower <- coefs[2,1] - (coefs[2,2] * 2)
+upper <- coefs[2,1] + (coefs[2,2] * 2)
+print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+```
+
+    Response:
+
+e. Do you see any real change in the $\beta_X$ estimate? **comment**
+    i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
+    
+      Response:
+    
+f. What is the total sample size $N$ used in the model fit? **comment**
+
+```{r}
+# number of observations used
+sum(!is.na(dat4$outcome))
+length(summary(lme4)$residuals)
+
+# number of groups used
+summary(lme4)$ngrps
+```
+
+    Response:
+
+
+
+
+
+
+
