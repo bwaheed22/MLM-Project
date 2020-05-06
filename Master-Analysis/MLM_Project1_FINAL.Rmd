@@ -309,7 +309,7 @@ anova(M4, M10, refit = F)
 ### e. Report anything unusual about the variance components (changes that are in a direction you didn’t expect) and any potential explanation for why those changes occured (hint: what did you add to the model?).
 
     Response:
-  * After adding an uncorrelated random slopes varying by schools on *YEARSTEA*, *MATHKNOW*, and *MATHPREP*, the variances of the random slopes are all close to 0. All other variance components remained almost the same as the random-intercept model.
+  * After adding uncorrelated random slopes varying by schools on *YEARSTEA*, *MATHKNOW*, and *MATHPREP*, the variances of the random slopes are all close to 0. All other variance components remained almost the same as the random-intercept model.
   
   * After adding correlated random slopes varying by schools on *YEARSTEA*, and *MATHKNOW*, the variances due to classrooms decreased for both. For the *YEARSTEA* model, the variances due to classrooms increased. After adding a correlated random slope for *MATHPREP*, the variance due to schools increased significantly, and had a -1 correlation with its random slope (i.e. singularity).
 
@@ -369,7 +369,7 @@ p2 <- ggplot(classroom, aes(x=yearstea, y=math1st, color = factor(classid))) +
   geom_point() +
   #geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE)+
   theme(legend.position = "none")+
-  ggtitle("MATH1ST Scores v. Classroom-Level Predictors across classrooms")
+  ggtitle("MATH1ST Scores v. Classroom-Level Predictors Across Classrooms")
 
 p3 <- ggplot(classroom, aes(x=mathknow, y=math1st, color = factor(classid))) + 
   geom_point() +
