@@ -29,6 +29,7 @@ options(scipen = 999)
 ```
 
 ## Team Members and division of work: 
+* Bilal Waheed, Dennis Hilgendorf, Trey Dellucci, Joe Marlo, Yi-Hung Wang
 
 ```{r}
 # Insert code to set.seed
@@ -92,7 +93,7 @@ summary(lm1)
 
 a. Report coefficient estimate for slope on X.
 
-    Response: 
+    Response: The coefficient estimate for the slope on X is `r round(summary(lm1)$coef[2,1], 3)`.
 
 b. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
 
@@ -101,10 +102,10 @@ b. Does a 95% confidence band for this coefficient estimate cover the “truth�
 coefs <- summary(lm1)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
 
-    Response:
+    Response: Yes, the 95% confidence bound of [`r round(lower, 3)`, `r round(upper, 3)`] covers the truth of 1.
     
 ### Question 3:
 3. Next, we simulate missing data in several ways. This is the first:
@@ -132,26 +133,26 @@ summary(lme2)
 coefs <- summary(lme2)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
 
 e. Do you see any real change in the $\beta_X$ estimate? **comment**
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data?
     
-    Response: 
+    Response: The $\beta_X$ estimate has increased slightly to `r round(coefs[2,1], 3)`, and the 95% confidence band as tightened to [`r round(lower, 3)`, `r round(upper, 3)`].
 
 f. What is the total sample size $N$ used in the model fit? **comment**
 
 ```{r}
 # number of observations used
-sum(!is.na(dat2$outcome))
-length(summary(lme2)$residuals)
+# sum(!is.na(dat2$outcome))
+# length(summary(lme2)$residuals)
 
 # number of groups used
-summary(lme2)$ngrps
+# summary(lme2)$ngrps
 ```
 
-    Response:
+    Response: The total sample size $N$ is `r scales::comma(length(summary(lme2)$residuals))`.
     
 ### Question 4: 
 Missing Data II: Make another copy of the original data, then modify the copy as follows:
@@ -173,28 +174,28 @@ summary(lme3)
 coefs <- summary(lme3)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
 
-    Response: 
+    Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)`.
 
 d. Do you see any real change in the $\beta_X$ estimate?
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
     
-    Response:
+    Response: The slope estimate has decreased along with the confidence band: [`r round(lower, 3)`, `r round(upper, 3)`].
 
 e. What is the total sample size $N$ used in the model fit? **comment**
 
 ```{r}
 # number of observations used
-sum(!is.na(dat3$outcome))
-length(summary(lme3)$residuals)
+# sum(!is.na(dat3$outcome))
+# length(summary(lme3)$residuals)
 
 # number of groups used
-summary(lme3)$ngrps
+# summary(lme3)$ngrps
 ```
 
-    Response:
+    Response: The total sample size $N$ is `r scales::comma(length(summary(lme3)$residuals))`.
 
 ### Question 5: 
 Missing Data III: Make another copy of the original data, then modify the copy as follows:
@@ -228,28 +229,28 @@ summary(lme4)
 coefs <- summary(lme4)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
+# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
 
-    Response:
+    Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)`.
 
 e. Do you see any real change in the $\beta_X$ estimate? **comment**
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
     
-      Response:
+      Response: The slope estimate has decreased signficantly along with the confidence band: [`r round(lower, 3)`, `r round(upper, 3)`].
     
 f. What is the total sample size $N$ used in the model fit? **comment**
 
 ```{r}
 # number of observations used
-sum(!is.na(dat4$outcome))
-length(summary(lme4)$residuals)
+# sum(!is.na(dat4$outcome))
+# length(summary(lme4)$residuals)
 
 # number of groups used
-summary(lme4)$ngrps
+# summary(lme4)$ngrps
 ```
 
-    Response:
+    Response: The total sample size $N$ is `r scales::comma(length(summary(lme4)$residuals))`.
 
 
 
