@@ -67,10 +67,10 @@ n.stu.per.class <- 200
 
 # generate data
 X_ij <- runif(n.classrooms * n.stu.per.class, min = 0, max = 1)
-eta_j <- rnorm(n.classrooms, mean = 0, sd = 2)
-epsilon_ij <- rnorm(n.classrooms * n.stu.per.class, mean = 0, sd = 2)
+eta_j <- rnorm(n.classrooms, mean = 0, sd = sqrt(2))
+epsilon_ij <- rnorm(n.classrooms * n.stu.per.class, mean = 0, sd = sqrt(2))
 
-# calculate outcome variable REVIEW THIS DGP !!!!!!!!!!!
+# calculate outcome variable
 Y_ij <- 0 + 1*X_ij + rep(eta_j, each = n.stu.per.class) + epsilon_ij
 
 # store variables in dataframe
@@ -83,7 +83,7 @@ dat <- data.frame(
 ```
 
   
-### Question 2:  REVIEW THIS MODEL !!!!!!!!!!!
+### Question 2: 
 Fit the model corresponding to the DGP on your simulated data.
 ```{r}
 # Insert code to fit model and print summary
@@ -102,7 +102,6 @@ b. Does a 95% confidence band for this coefficient estimate cover the “truth�
 coefs <- summary(lm1)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
 
     Response: Yes, the 95% confidence bound of [`r round(lower, 3)`, `r round(upper, 3)`] covers the truth of 1.
@@ -126,33 +125,25 @@ dat2$outcome <- ifelse(Z_ij == 1, NA, dat2$outcome)
 d. Refit the model on the new data and report the coefficient estimate for slope on X. Look at the other parameter estimates as well.
 ```{r}
 # Insert code to fit model and compute confidence interval
-lme2 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat2)
+lme2 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat2, na.action = "na.omit")
 summary(lme2)
 
 # calculate confidence band
 coefs <- summary(lme2)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
+
+    Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)`.
 
 e. Do you see any real change in the $\beta_X$ estimate? **comment**
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data?
     
-    Response: The $\beta_X$ estimate has increased slightly to `r round(coefs[2,1], 3)`, and the 95% confidence band as tightened to [`r round(lower, 3)`, `r round(upper, 3)`].
+    Response: The $\beta_X$ estimate has increased slightly to `r round(coefs[2,1], 3)`, and the 95% confidence band as also slightly widened to [`r round(lower, 3)`, `r round(upper, 3)`] but still covers the truth of 1.
 
 f. What is the total sample size $N$ used in the model fit? **comment**
 
-```{r}
-# number of observations used
-# sum(!is.na(dat2$outcome))
-# length(summary(lme2)$residuals)
-
-# number of groups used
-# summary(lme2)$ngrps
-```
-
-    Response: The total sample size $N$ is `r scales::comma(length(summary(lme2)$residuals))`.
+    Response: The total sample size $N$ is `r scales::comma(length(summary(lme2)$residuals))` which corresponds to $p = 0.5$.
     
 ### Question 4: 
 Missing Data II: Make another copy of the original data, then modify the copy as follows:
@@ -167,35 +158,25 @@ dat3$outcome <- ifelse(Z_ij == 1, NA, dat3$outcome)
 c. Refit the model on the new data and report the coefficient estimate for slope on X. Look at the other parameter estimates as well. **comment**
 ```{r}
 # Insert code to fit model and compute confidence interval
-lme3 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat3)
+lme3 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat3, na.action = "na.omit")
 summary(lme3)
 
 # calculate confidence band
 coefs <- summary(lme3)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
 
-    Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)`.
+    Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)`. Power has been reduced as our sample size is half of the original. The random effects are mostly unchanged.
 
 d. Do you see any real change in the $\beta_X$ estimate?
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
     
-    Response: The slope estimate has decreased along with the confidence band: [`r round(lower, 3)`, `r round(upper, 3)`].
+    Response: The $\beta_X$ estimate has decreased to `r round(coefs[2,1], 3)`, and the 95% confidence band as also slightly widened to [`r round(lower, 3)`, `r round(upper, 3)`] but still covers the truth of 1.
 
 e. What is the total sample size $N$ used in the model fit? **comment**
 
-```{r}
-# number of observations used
-# sum(!is.na(dat3$outcome))
-# length(summary(lme3)$residuals)
-
-# number of groups used
-# summary(lme3)$ngrps
-```
-
-    Response: The total sample size $N$ is `r scales::comma(length(summary(lme3)$residuals))`.
+    Response: The total sample size $N$ is `r scales::comma(length(summary(lme3)$residuals))` which corresponds to mean of our predictor.
 
 ### Question 5: 
 Missing Data III: Make another copy of the original data, then modify the copy as follows:
@@ -222,35 +203,25 @@ dat4$outcome <- ifelse(Z_ij == 1, NA, dat4$outcome)
 d. Refit the model on the new data and report the coefficient estimate for slope on X. Look at the other parameter estimates as well. **comment**
 ```{r}
 # Insert code to fit model and compute confidence interval
-lme4 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat4)
+lme4 <- lmerTest::lmer(outcome ~ predictor + (1 | classid), data = dat4, na.action = "na.omit")
 summary(lme4)
 
 # calculate confidence band
 coefs <- summary(lme4)$coefficients
 lower <- coefs[2,1] - (coefs[2,2] * 2)
 upper <- coefs[2,1] + (coefs[2,2] * 2)
-# print(paste0("The 95% confidence band is [", round(lower, 3), ", ", round(upper, 3), "]"))
 ```
 
-    Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)`.
+    Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)`. Power has been reduced as our sample size is less than half of the original. The random effects have decreased dramatically.
 
 e. Do you see any real change in the $\beta_X$ estimate? **comment**
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
-    
-      Response: The slope estimate has decreased signficantly along with the confidence band: [`r round(lower, 3)`, `r round(upper, 3)`].
+      
+      Response: The $\beta_X$ estimate has decreased signficantly to `r round(coefs[2,1], 3)`, and the 95% confidence band as also slightly widened to [`r round(lower, 3)`, `r round(upper, 3)`] and does not cover the truth of 1.
     
 f. What is the total sample size $N$ used in the model fit? **comment**
 
-```{r}
-# number of observations used
-# sum(!is.na(dat4$outcome))
-# length(summary(lme4)$residuals)
-
-# number of groups used
-# summary(lme4)$ngrps
-```
-
-    Response: The total sample size $N$ is `r scales::comma(length(summary(lme4)$residuals))`.
+    Response: The total sample size $N$ is `r scales::comma(length(summary(lme4)$residuals))` which corresponds to $= 1 - mean(expit(outcome))$.
 
 
 
