@@ -191,6 +191,9 @@ Make a *person-period* file with math score (Kindergarten and First grade). That
 ```{r}
 # Insert code to create the variables math0 and math1 and to reshape data
 personperiod <- classroom %>% mutate(math0 = mathkind, math1 = mathkind + mathgain)
+
+class_pp <- reshape(personperiod, varying = c("math0", "math1"), v.names = "math", timevar = "year",
+times = c(0, 1), direction = "long")
 ```
 
 
@@ -199,28 +202,41 @@ We ignore classrooms in this analysis, but keep it in the notation.
 
 ### a. Fit a model with `math` as outcome, and fixed effect for time trend (`year`), and random intercepts for schools.
 ```{r}
-# Insert code to fit model and print summary
+lm3 <- lmerTest:: lmer(math ~ year + (1 | schoolid), data = class_pp)
+summary(lm3)
 ```
 
 ### b. Write down the model
 
     Equation: 
+  $$MATH_{tijk} = b_0 + \zeta_{0k} + b_1TIME_{tijk} + \epsilon_{tijk}$$
+  $$\mbox{with } \zeta_{0k} \sim N(0, \sigma^2_{\zeta_0}) \mbox{, } \epsilon_{tijk} \sim N(0, \sigma^2_{\epsilon}) \mbox{, independent of each other}$$
     
 ### c. Add random intercepts for child
 ```{r}
 # Insert code to fit new model and print summary output
+lm4 <- lmerTest:: lmer(math ~ year + (1 | schoolid/classid), data = class_pp)
+summary(lm4)
 ```
 
 ### d. Write down the model
 
     Equation: 
+  $$MATH_{tijk} = b_0 + \delta_{0ijk} + \zeta_{0k} + b_1TIME_{tijk} + \epsilon_{tijk}$$
+  $$\mbox{with } \zeta_{0k} \sim N(0, \sigma^2_{\zeta_0}) \mbox{, } \delta_{0ijk} \sim N(0, \sigma^2_{\delta_0}) \mbox{, } \epsilon_{tijk} \sim N(0, \sigma^2_{\epsilon}) \mbox{, independent of each other}$$
 
 ## Question 9
 Report original and new variance estimates of $\sigma^2_{\zeta_0}$ (between schools) and $\sigma^2_{\varepsilon}$ (within schools):
 
-$\sigma^2_{\zeta_0}:$ \newline
-\newline
-$\sigma^2_{\varepsilon}:$
+$\sigma^2_{\zeta_0}:$ 
+
+* Original 348.7
+* New: 294.9 \newline
+ \newline
+$\sigma^2_{\varepsilon}:$ 
+
+* Original: 1268.4
+* New: 1179.1
     
 ### a. Compute a pseudo $R^2$ relating the between school variation and ignoring between students in the same school. In other words, what fraction of the between-school variance in the first model is 'explained' by the addition of a student random effect?
 ```{r}
