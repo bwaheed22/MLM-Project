@@ -147,7 +147,6 @@ The addition of classroom level covariates of MATHKNOW, MATHPREP, and YEARSTEA i
 
     Response:
 Adding the classroom-level predictors shows a potential misspecification of the model. The classroom level predictors can make it difficult to estimate the individual level variance (i.e overstated individual variance) due to individual outliers in classrooms that have a very small amount of students.
-> GO THROUGH RECORDING 
 
 ## Question 4.
 ### Add all student-level predictors excepting mathgain and mathkind:

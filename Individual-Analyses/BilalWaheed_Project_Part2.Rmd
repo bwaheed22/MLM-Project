@@ -35,7 +35,8 @@ require("car")
 library(tidyverse)
 ```
 
-## Team Members and division of work: 
+## Team Members and division of work:
+* Bilal Waheed, Dennis Hilgendorf, Trey Dellucci, Joe Marlo, Yi-Hung Wang
 
 ## Question 1
 Refit the model in Part 1 that has all fixed effects as well as random intercepts (in schools and classrooms). Recall that `math1st = mathkind + mathgain` is the outcome. The model is `math1st ~ housepov + yearstea + mathprep + mathknow + ses + sex + minority + (1|schoolid/classid), REML = T)`
@@ -66,6 +67,8 @@ resFE <- classroom[complete.cases(classroom),"math1st"] - predsFE
 classroom[complete.cases(classroom), "resFE"] = resFE
 ```
 
+\pagebreak
+
 ## Question 2 
 Show that the residual is not indepedent within schools in some manner. 
 ```{r}
@@ -86,6 +89,8 @@ resFE_RE <- residuals(lm1)
 classroom[complete.cases(classroom), "resFE_RE"] <- resFE_RE
 ```
 
+\pagebreak
+
 ## Question 4
 ### a. Show that these new residuals, resFE_RE are MUCH LESS (if not completely un-) correlated within schools, using the same method as before (boxplot?) **(you should comment)** 
 ```{r}
@@ -93,8 +98,9 @@ classroom %>% group_by(schoolid) %>% mutate(medResFE_RE = median(resFE_RE, na.rm
 ```
 
     Response: 
-  The relationship within schools appears to be much less than before. The mean residuals for each school 
+  The relationship of the residuals within schools appears to be much less than before. The mean residuals for each school appear to be approximately the same across each school, showing less evidence of heteroscedasticity.
 
+\pagebreak
 ## Question 5
 ### a. Generate the two sets of BLUPs (for random effects zeta0 and eta0)
 ```{r}
@@ -109,7 +115,7 @@ eta0_ranef <- ranefs$classid[,1]
 # Insert code to examine BLUPs for normality
 # par(mfrow=c(1,2)) produces palette for one row of plots with two columns 
 
-par(mfrow = c(1,2))
+par(mfrow = c(2,2))
 plot(density(zeta0_ranef))
 plot(density(eta0_ranef))
 
@@ -121,14 +127,17 @@ qqline(eta0_ranef)
 ```
 
     Response: 
-  The density and QQ-plots of the random effects for schools and classrooms ($\zeta_0$ and $\eta_0$) show evidence of normality.
+  The density and QQ-plots of the random effects for schools and classrooms ($\zeta_0$ and $\eta_0$) show evidence of normality, with some concern in the left and right tails of the QQ-plots of both random effects.
+
+\pagebreak
 
 ## Question 6 
 ### a. Fit a slightly more complicated model with the same fixed effects, but now add a random slope for minority, correlated with the random intercept, at the school level (keep the classroom level random intercept).
 ```{r}
 # Insert code to fit the slightly more complicated model and print the summary
 lm2 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathprep + mathknow + 
-                   ses + sex + minority + (minority | schoolid) + (1 | classid), REML = T, data = classroom)
+                   ses + sex + minority + (minority | schoolid) + (1 | classid), 
+                   REML = T, data = classroom)
 summary(lm2)
 ```
 
@@ -136,25 +145,32 @@ summary(lm2)
 ```{r}
 # Insert code to construct residual and BLUPs 
 resFE_RE <- residuals(lm2)
+zeta0 <- ranef(lm2)$schoolid[,1]
+zeta1 <- ranef(lm2)$schoolid[,2]
 ```
 
 ### c. Examine all error estimates (individual level residuals, BLUPs (school and classroom level) for normality **(and comment)**). 
 ```{r}
-qqnorm(resFE_RE)
-qqline(resFE_RE)
+par(mfrow = c(1,2))
+  plot(density(resFE_RE)); qqnorm(resFE_RE); qqline(resFE_RE)
+  
+  plot(density(zeta0)); qqnorm(zeta0); qqline(zeta0)
+  
+  plot(density(zeta1)); qqnorm(zeta1); qqline(zeta1)
+
 ```
 
     Response: 
-
+  The density & q-q plots of of the individual level residuals appears to be symmetric and normal. However, the BLUPs do not show evdience of normality, with erratic density and qq-plots.
+  
 ### d. Plot zeta0 vs. zeta1 to see whether the estimated correlation is consistent with the observed. **Briefly comment**. 
 ```{r}
-zeta0 <- ranef(lm2)$schoolid[,1]
-zeta1 <- ranef(lm2)$schoolid[,2]
-
 plot(x = zeta1, y = zeta0)
+cor(zeta0,zeta1) 
 ```
 
     Response: 
+  The plot of zeta0 v. zeta1 shows that the estimated correlation is consistent with the observed correlation `(-0.83 v. -0.79)`. However, there are some interesting points that have a strange positive correlation.
 
 ### e. Track down those odd points in the scatterplot. What schools are they? Do they have anything in common? **(You should comment)**
 ```{r}
@@ -244,12 +260,12 @@ $\sigma^2_{\varepsilon}:$
 (rsq_b <- (348.7 - 307.5)/(348.7))
 ```
 
-> The Psuedo-$R^2$ is `0.1181531` which means that approximately 15% of between-school variance in the first model is explained by the addition of the student random effect in the second model.
+> The Psuedo-$R^2$ is `0.1181531` which means that approximately 12% of between-school variance in the first model is explained by the addition of the student random effect in the second model.
 
 ### b. Does the total variation stay about the same (adding between children within schools variance as well, to the second model results) **(you should comment)**?
     
     Response:
-  The total variation is approximately the same between both models (1619.9 in the first model, and 1608.6 in the second model).
+  The total variation is approximately the same between both models (1619.9 in the first model, and 1608.6 in the second model). This makes sense because the addition of the child random effect explains some of the between-student variation in schools.
     
 ## Question 10 
 Add a random slope ($\zeta_1$) for the trend (year) within schools (uncorrelated with random intercept ($\zeta_0$))
@@ -281,15 +297,21 @@ plot(zeta_1_2, zeta_0_2)
 i. In which year is there more between school variation, net of all else, **(you should comment)**?
     
     Response: 
-  In year 1 there is more between school variation.
+  In year 1 there is more between school variation. This could be due to the fact that after the first year, children's outcomes will vary depending on performance in the prior year.
 
 ## Question 11
 If you ran the model BY YEAR, and removed the year trend from the model, would you get the same estimates for the variances between schools? **(you should comment)* *
 ```{r}
-# Insert code to fit the two models by year and print out the summary 
+# Insert code to fit the two models by year and print out the summary
+lm5_0 <- lmerTest::lmer(math ~ (1 | schoolid), data = class_pp[class_pp$year == 0,])
+summary(lm5_0)
+
+lm5_1 <- lmerTest::lmer(math ~ (1 | schoolid), data = class_pp[class_pp$year == 1,])
+summary(lm5_1)
 ```
 
     Response: 
+  No, the estimates are not the same if the model is run by year (`364.3 year 0 v. 306.8 year 1`). Compared to the previous models where the time trend was included, the variances between schools increased from year 0 to year 1, instead of decrease.
 
 ## Question 12 
 Rerun the last nested longitudinal model, allowing correlation between intercept and slope.
@@ -307,12 +329,16 @@ anova(lm5, lm6, refit = F)
 
 ### b. Compute V_S (year = 0) and V_S(year = 1) for this new model (your formula should include covariance terms).
 
-* V_S(year = 0) = $\sigma^2_{\zeta_0} + 0^2 \sigma^2_{\zeta_1} + 2\cdot0\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) = \sigma^2_{\zeta_0} = 370.6$
-* V_S(year = 1) =
+* V_S(year = 0) = 
 
-$$\sigma^2_{\zeta_0} + 1^2 \cdot \sigma^2_{\zeta_1} + 2\cdot1\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) = $$
-$$\sigma^2_{\zeta_0} + \sigma^2_{\zeta_1} + 2\cdot \sigma_{\zeta_0} \cdot \sigma_{\zeta_1} \cdot \rho(\sigma^2_{\zeta_0}, \sigma^2_{\zeta_1}) = $$
-$$370.6 + 109.1 + 2*(19.25)*(10.44)*(-0.45) = 298.827$$
+$$\sigma^2_{\zeta_0} + 0^2 \sigma^2_{\zeta_1} + 2\cdot0\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) =$$ 
+$$\sigma^2_{\zeta_0} = 370.6$$
+
+* V_S(year = 1) = 
+
+$$\sigma^2_{\zeta_0} + 1^2 \cdot \sigma^2_{\zeta_1} + 2\cdot1\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) =$$
+$$\sigma^2_{\zeta_0} + \sigma^2_{\zeta_1} + 2\cdot \sigma_{\zeta_0} \cdot \sigma_{\zeta_1} \cdot \rho_{\sigma^2_{\zeta_0}, \sigma^2_{\zeta_1}} = $$
+$$370.6 + 109.1 + 2(19.25)(10.44)(-0.45) = 298.827$$
 
   i. Is this result (and thus model) more consistent with the separate grade analysis? You are implicity testing model fit here. **(you should comment)**
       
