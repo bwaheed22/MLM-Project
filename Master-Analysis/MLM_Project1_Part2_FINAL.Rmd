@@ -1,0 +1,369 @@
+---
+title: "MLM Final Project Part 2ab"
+date:  "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  pdf_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+###Load libraries
+if(!requireNamespace("here"))
+  install.packages("here", repos = "https://cloud.r-project.org")
+require("here")
+
+if(!requireNamespace("ggplot2"))
+  install.packages("ggplot2", repos = "https://cloud.r-project.org")
+require("ggplot2")
+
+if(!requireNamespace("lme4"))
+  install.packages("lme4", repos = "https://cloud.r-project.org")
+require("lme4")
+
+if(!requireNamespace("lmerTest"))
+  install.packages("lmerTest", repos = "https://cloud.r-project.org")
+require("lmerTest")
+
+if(!requireNamespace("car"))
+  install.packages("car", repos = "https://cloud.r-project.org")
+require("car")
+library(tidyverse)
+```
+
+## Team Members and division of work:
+* Bilal Waheed, Dennis Hilgendorf, Trey Dellucci, Joe Marlo, Yi-Hung Wang
+
+## Question 1
+Refit the model in Part 1 that has all fixed effects as well as random intercepts (in schools and classrooms). Recall that `math1st = mathkind + mathgain` is the outcome. The model is `math1st ~ housepov + yearstea + mathprep + mathknow + ses + sex + minority + (1|schoolid/classid), REML = T)`
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#Load Data:
+classroom <- read_csv("Data/classroom.csv")
+classroom <- classroom %>% mutate(math1st = mathkind + mathgain)
+```
+
+
+```{r}
+lm1 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathprep + mathknow + 
+                   ses + sex + minority + (1|schoolid/classid), REML = T, data = classroom)
+summary(lm1)
+```
+
+a. Construct the residual that removes only the 'fixed effects' then subtract it from the outcome; call this residual resFE
+    i. R hint 1: `predict` has an option to generate the prediction based on the fixed effects only. 
+    ii. R hint 2: If you decide to add a column to your data frame with resFE, note that predict only generates predictions for cases uses in the model *after listwise deletion.* 
+
+```{r}
+# Calculate predictions using fixed effects only:
+predsFE <- predict(lm1, re.form = ~0)
+
+# Calculate residual and add to dataframe:
+resFE <- classroom[complete.cases(classroom),"math1st"] - predsFE
+classroom[complete.cases(classroom), "resFE"] = resFE
+```
+
+\pagebreak
+
+## Question 2 
+Show that the residual is not indepedent within schools in some manner. 
+```{r message=FALSE, warning=FALSE}
+# Insert code to show that the residual, resFE, is not indepedent within schools
+classroom %>% group_by(schoolid) %>% mutate(medRes = median(resFE, na.rm = T)) %>% ggplot(., aes(x = reorder(schoolid, medRes), y = resFE)) + geom_boxplot()
+```
+
+* The boxplots of residuals show evidence of a relationship of scores within schools. After excluding random effects due to schools, the variation between each school is no longer accounted for, and the plot shows that some schools have residuals below the overall average, and some are above, indicative of heterogeneity.
+
+## Question 3
+### a. Construct the residual that utilizes the BLUPs for the random effects using the R command `residuals`.
+    
+    i. Call the new residual resFE_RE
+    
+```{r}
+# Insert code to construct the residual 
+resFE_RE <- residuals(lm1)
+classroom[complete.cases(classroom), "resFE_RE"] <- resFE_RE
+```
+
+\pagebreak
+
+## Question 4
+### a. Show that these new residuals, resFE_RE are MUCH LESS (if not completely un-) correlated within schools, using the same method as before (boxplot?) **(you should comment)** 
+```{r}
+classroom %>% group_by(schoolid) %>% mutate(medResFE_RE = median(resFE_RE, na.rm = T)) %>% ggplot(., aes(x = reorder(schoolid, medResFE_RE), y = resFE_RE)) + geom_boxplot()
+```
+
+    Response: 
+  The relationship of the residuals within schools appears to be much less than before. The mean residuals for each school appear to be approximately the same across each school, showing less evidence of heteroscedasticity.
+
+\pagebreak
+## Question 5
+### a. Generate the two sets of BLUPs (for random effects zeta0 and eta0)
+```{r}
+# Insert code to generate the two sets of BLUPS (zeta0 and eta0)
+ranefs <- ranef(lm1)
+zeta0_ranef <- ranefs$schoolid[,1]
+eta0_ranef <- ranefs$classid[,1]
+```
+
+### b. Examine these for normality (include evidence), **and comment**.
+```{r}
+# Insert code to examine BLUPs for normality
+# par(mfrow=c(1,2)) produces palette for one row of plots with two columns 
+
+par(mfrow = c(2,2))
+plot(density(zeta0_ranef), main = "Zeta0")
+plot(density(eta0_ranef), main = "Eta0")
+
+qqnorm(zeta0_ranef, main = 'QQ Zeta0')
+qqline(zeta0_ranef)
+
+qqnorm(eta0_ranef, main = 'QQ Eta0')
+qqline(eta0_ranef)
+
+# shapiro wilks test
+shapiro.test(zeta0_ranef)
+shapiro.test(eta0_ranef)
+```
+
+    Response: 
+  The density and QQ-plots of the random effects for schools and classrooms ($\zeta_0$ and $\eta_0$) show evidence of normality, with some concern in the left and right tails of the QQ-plots of both random effects. Additionally, Shapiro Wilks test fails to reject the null of non-normality for both ($\zeta_0$ and $\eta_0$).
+
+\pagebreak
+
+## Question 6 
+### a. Fit a slightly more complicated model with the same fixed effects, but now add a random slope for minority, correlated with the random intercept, at the school level (keep the classroom level random intercept).
+```{r}
+# Insert code to fit the slightly more complicated model and print the summary
+lm2 <- lmerTest::lmer(math1st ~ housepov + yearstea + mathprep + mathknow + 
+                   ses + sex + minority + (minority | schoolid) + (1 | classid), 
+                   REML = T, data = classroom)
+summary(lm2)
+```
+
+### b. Construct the residual (individual, level 1) and the BLUPs for the remaining random effects. Call the new residual resFE_RE as before.
+```{r}
+# Insert code to construct residual and BLUPs 
+resFE_RE <- residuals(lm2)
+zeta0 <- ranef(lm2)$schoolid[,1]
+zeta1 <- ranef(lm2)$schoolid[,2]
+```
+
+### c. Examine all error estimates (individual level residuals, BLUPs (school and classroom level) for normality **(and comment)**). 
+```{r}
+par(mfrow = c(3,2))
+
+plot(density(resFE_RE), main = "Individual level residuals"); 
+qqnorm(resFE_RE); qqline(resFE_RE)
+  
+plot(density(zeta0), main = "Zeta0"); 
+qqnorm(zeta0); qqline(zeta0)
+  
+plot(density(zeta1), main = "Zeta1"); 
+qqnorm(zeta1); qqline(zeta1)
+
+# sm::sm.density(resFE_RE, model = 'normal')
+
+# shapiro wilks test
+# shapiro.test(resFE_RE)
+shapiro.test(zeta0)
+shapiro.test(zeta1)
+```
+
+
+    Response: 
+  The density & Q-Q plots of the individual level residuals appears to be symmetric and normal. However, the BLUPs do not show evidence of normality, with erratic density and qq-plots. Shapiro Wilks test reject the null of non-normality for both ($\zeta_0$ and $\zeta_1$)
+  
+  <!-- Additionally, Shapiro Wilks test fails to reject the null of non-normality for both ($\zeta_0$ and $\eta_0$). -->
+  
+### d. Plot zeta0 vs. zeta1 to see whether the estimated correlation is consistent with the observed. **Briefly comment**. 
+```{r}
+plot(x = zeta1, y = zeta0)
+cor(zeta0,zeta1) 
+```
+
+    Response: 
+  The plot of zeta0 v. zeta1 shows that the estimated correlation is consistent with the observed correlation `(-0.83 v. -0.79)`. However, there are some interesting points that have a strange positive correlation.
+
+### e. Track down those odd points in the scatterplot. What schools are they? Do they have anything in common? **(You should comment)**
+```{r}
+# Insert code if you want to examine odd points
+
+# Identify which schools are odd on the scatterplot:
+test_df <- data.frame(zeta0 = zeta0, zeta1 = zeta1, z0z1 = zeta0*zeta1)
+odd_schools <- which(test_df$z0z1 > 0)
+not_odd <- c(34, 40, 103, 52, 57, 48)
+odd_schools <- odd_schools[!(odd_schools %in% not_odd)] %>% sort()
+```
+
+```{r}
+# Add "oddschools" indicator to dataset:
+classroom$oddschools <- classroom$schoolid %in% odd_schools
+
+# Calculate percentage of minority students in each odd school:
+classroom %>% group_by(oddschools) %>% summarize(minority_avg = mean(minority))
+```
+
+```{r message=FALSE, warning=FALSE}
+# Show odd schools in plot of zeta1 v. zeta0:
+test_df %>% 
+  mutate(schoolid = row_number()) %>% 
+  left_join(distinct(classroom[, c("schoolid", "oddschools")])) %>% 
+  ggplot(aes(x = zeta1, y = zeta0, color = oddschools)) + 
+  geom_point()
+```
+
+    Response:
+  The "odd" schools in the scatterplot are those schools that have mostly minority populations. This makes it difficult to estimate a random slope for these schools because there is little variation in minority (i.e. slope estimates close to 0).
+  
+
+## Question 7
+Make a *person-period* file with math score (Kindergarten and First grade). That is, `math0 <- mathkind; math1 <- mathkind + mathgain` (you have to make this work in the dataframe). Using `reshape` in R, you have to be careful to specify the name of the math variable (`math0` and `math1`) as *varying*. 
+
+```{r message=FALSE, warning=FALSE}
+# Insert code to create the variables math0 and math1 and to reshape data
+personperiod <- classroom %>% mutate(math0 = mathkind, math1 = mathkind + mathgain)
+
+class_pp <- reshape(personperiod, varying = c("math0", "math1"), v.names = "math", timevar = "year",
+times = c(0, 1), direction = "long")
+```
+
+
+## Question 8
+We ignore classrooms in this analysis, but keep it in the notation. 
+
+### a. Fit a model with `math` as outcome, and fixed effect for time trend (`year`), and random intercepts for schools.
+```{r}
+lm3 <- lmerTest:: lmer(math ~ year + (1 | schoolid), data = class_pp)
+summary(lm3)
+```
+
+### b. Write down the model
+
+    Equation: 
+  $$MATH_{tijk} = b_0 + \zeta_{0k} + b_1TIME_{tijk} + \epsilon_{tijk}$$
+  $$\mbox{with } \zeta_{0k} \sim N(0, \sigma^2_{\zeta_0}) \mbox{, } \epsilon_{tijk} \sim N(0, \sigma^2_{\epsilon}) \mbox{, independent of each other}$$
+    
+### c. Add random intercepts for child
+```{r}
+# Insert code to fit new model and print summary output
+lm4 <- lmerTest:: lmer(math ~ year + (1 | schoolid/childid), data = class_pp)
+summary(lm4)
+```
+
+### d. Write down the model
+
+    Equation: 
+  $$MATH_{tijk} = b_0 + \delta_{0ijk} + \zeta_{0k} + b_1TIME_{tijk} + \epsilon_{tijk}$$
+  $$\mbox{with } \zeta_{0k} \sim N(0, \sigma^2_{\zeta_0}) \mbox{, } \delta_{0ijk} \sim N(0, \sigma^2_{\delta_0}) \mbox{, } \epsilon_{tijk} \sim N(0, \sigma^2_{\epsilon}) \mbox{, independent of each other}$$
+
+## Question 9
+Report original and new variance estimates of $\sigma^2_{\zeta_0}$ (between schools) and $\sigma^2_{\varepsilon}$ (within schools):
+
+$\sigma^2_{\zeta_0}:$ 
+
+* Original 348.7
+* New: 307.5 \newline
+ \newline
+$\sigma^2_{\varepsilon}:$ 
+
+* Original: 1268.4
+* New: 599.1
+    
+### a. Compute a pseudo $R^2$ relating the between school variation and ignoring between students in the same school. In other words, what fraction of the between-school variance in the first model is 'explained' by the addition of a student random effect?
+```{r}
+# Insert code to compute psuedo R^2 or do this inline 
+(rsq_b <- (348.7 - 307.5)/(348.7))
+```
+
+> The Psuedo-$R^2$ is `r round(rsq_b, 3)` which means that approximately 12% of between-school variance in the first model is explained by the addition of the student random effect in the second model.
+
+### b. Does the total variation stay about the same (adding between children within schools variance as well, to the second model results) **(you should comment)**?
+    
+    Response:
+  The total variation is approximately the same between both models (1619.9 in the first model, and 1608.6 in the second model). This makes sense because the addition of the child random effect explains some of the between-student variation in schools.
+    
+## Question 10 
+Add a random slope ($\zeta_1$) for the trend (year) within schools (uncorrelated with random intercept ($\zeta_0$))
+```{r}
+lm5 <- lmerTest:: lmer(math ~ year + (0 + year | schoolid) + (1 | schoolid/childid), data = class_pp)
+summary(lm5)
+```
+
+
+### a. Generate the BLUPs for the random effects and examine whether the independence between zeta_0 and zeta_1 is reflected in a scatterplot of these two sets of effects. **(you should comment)**
+```{r}
+# Insert code to generate BLUPs
+zeta_0_2 <- ranef(lm5)$schoolid[,1]
+zeta_1_2 <- ranef(lm5)$schoolid[,2]
+delta_0 <- ranef(lm5)$childid[,1]
+
+plot(zeta_1_2, zeta_0_2)
+```
+
+    Response:
+  The plot of the random effects of the intercept and slope for schools shows some evidence of independence. The points are approximately randomly scattered across different values of of the random slope, showing little to no correlation between the two.
+
+### b. Compute V_S(year = 0) and V_S (year = 1). Since there are only two years, this is a form of heteroscedasticity in the random effects.
+
+* V_S(year = 0) = $\sigma^2_{\zeta_0} + 0^2 \sigma^2_{\zeta_1} = \sigma^2_{\zeta_0} = 324.81$
+* V_S(year = 1) = $\sigma^2_{\zeta_0} + 1^2 \sigma^2_{\zeta_1} = \sigma^2_{\zeta_0} + \sigma^2_{\zeta_1} = 324.81 + 88.67 = 413.48$
+
+
+i. In which year is there more between school variation, net of all else, **(you should comment)**?
+    
+    Response: 
+  In year 1 there is more between school variation. This could be due to the fact that after the first year, children's outcomes will vary depending on performance in the prior year. 
+
+## Question 11
+If you ran the model BY YEAR, and removed the year trend from the model, would you get the same estimates for the variances between schools? **(you should comment)* *
+```{r}
+# Insert code to fit the two models by year and print out the summary
+lm5_0 <- lmerTest::lmer(math ~ (1 | schoolid), data = class_pp[class_pp$year == 0,])
+summary(lm5_0)
+
+lm5_1 <- lmerTest::lmer(math ~ (1 | schoolid), data = class_pp[class_pp$year == 1,])
+summary(lm5_1)
+```
+
+    Response: 
+  No, the estimates are not the same if the model is run by year (`364.3 year 0 v. 306.8 year 1`). Compared to the previous models where the time trend was included, the variances between schools increased from year 0 to year 1, instead of decrease.
+
+## Question 12 
+Rerun the last nested longitudinal model, allowing correlation between intercept and slope.
+
+### a. Is the correlation significant? **(you should comment)**
+```{r}
+lm6 <- lmerTest:: lmer(math ~ year + (year | schoolid) + (1 | childid), data = class_pp)
+summary(lm6)
+
+anova(lm5, lm6, refit = F)
+```
+
+    Response:
+  The correlation is significant, suggesting that we need to add the correlation between the random slope and intercept for year varying by schools.
+
+### b. Compute V_S (year = 0) and V_S(year = 1) for this new model (your formula should include covariance terms).
+
+* V_S(year = 0) = 
+
+$$\sigma^2_{\zeta_0} + 0^2 \sigma^2_{\zeta_1} + 2\cdot0\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) =$$ 
+$$\sigma^2_{\zeta_0} = 370.6$$
+
+* V_S(year = 1) = 
+
+$$\sigma^2_{\zeta_0} + 1^2 \cdot \sigma^2_{\zeta_1} + 2\cdot1\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) =$$
+$$\sigma^2_{\zeta_0} + \sigma^2_{\zeta_1} + 2\cdot \sigma_{\zeta_0} \cdot \sigma_{\zeta_1} \cdot \rho_{\sigma^2_{\zeta_0}, \sigma^2_{\zeta_1}} = $$
+$$370.6 + 109.1 + 2(19.25)(10.44)(-0.45) = 298.827$$
+
+  i. Is this result (and thus model) more consistent with the separate grade analysis? You are implicity testing model fit here. **(you should comment)**
+    
+    Response:
+  Yes, this result is consistent with the separate grade analysis because the variance between schools decreases from year 0 to year 1.
+    
+
