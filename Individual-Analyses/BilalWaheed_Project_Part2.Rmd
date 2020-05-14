@@ -341,8 +341,10 @@ $$\sigma^2_{\zeta_0} + \sigma^2_{\zeta_1} + 2\cdot \sigma_{\zeta_0} \cdot \sigma
 $$370.6 + 109.1 + 2(19.25)(10.44)(-0.45) = 298.827$$
 
   i. Is this result (and thus model) more consistent with the separate grade analysis? You are implicity testing model fit here. **(you should comment)**
-      
-      Response: 
+    
+    Response:
+  Yes, this result is consistent with the separate grade analysis because the variance between schools decreases from year 0 to year 1.
+    
 
 
 
