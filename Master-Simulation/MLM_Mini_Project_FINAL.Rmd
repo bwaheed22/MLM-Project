@@ -76,7 +76,7 @@ Y_ij <- 0 + 1*X_ij + rep(eta_j, each = n.stu.per.class) + epsilon_ij
 # store variables in dataframe
 dat <- data.frame(
   studentid = 1:(n.classrooms * n.stu.per.class),
-  classid = rep(1:n.stu.per.class, each = n.classrooms),
+  classid = rep(1:n.classrooms, each = n.stu.per.class),
   predictor = X_ij,
   outcome = Y_ij
 )
@@ -172,11 +172,11 @@ Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)
 d. Do you see any real change in the $\beta_X$ estimate?
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
     
-    Response: The $\beta_X$ estimate has decreased to `r round(coefs[2,1], 3)`, and the 95% confidence band as also slightly widened to [`r round(lower, 3)`, `r round(upper, 3)`] but still covers the truth of 1.
+    Response: The $\beta_X$ estimate has decreased to `r round(coefs[2,1], 3)`, and the 95% confidence band as also widened to [`r round(lower, 3)`, `r round(upper, 3)`] but still covers the truth of 1.
 
 e. What is the total sample size $N$ used in the model fit? **comment**
 
-    Response: The total sample size $N$ is `r scales::comma(length(summary(lme3)$residuals))` which is expected as the mean of our predictor is `r round(mean(dat$predictor), 3)`.
+    Response: The total sample size $N$ is `r scales::comma(length(summary(lme3)$residuals))` which is expected as the mean of our predictor (which is what the MAR process is dependent on) is `r round(mean(dat$predictor), 3)`.
 
 ### Question 5: 
 Missing Data III: Make another copy of the original data, then modify the copy as follows:
@@ -217,7 +217,7 @@ Response: The coefficient estimate for the slope on X is `r round(coefs[2,1], 3)
 e. Do you see any real change in the $\beta_X$ estimate? **comment**
     i. Does a 95% confidence band for this coefficient estimate cover the “truth” that you used to generate the data? **comment**
       
-      Response: The $\beta_X$ estimate has decreased signficantly to `r round(coefs[2,1], 3)`, and the 95% confidence band as also slightly widened to [`r round(lower, 3)`, `r round(upper, 3)`] and does not cover the truth of 1.
+      Response: The $\beta_X$ estimate has decreased signficantly to `r round(coefs[2,1], 3)`, and the 95% confidence band as also widened to [`r round(lower, 3)`, `r round(upper, 3)`] and does not cover the truth of 1.
     
 f. What is the total sample size $N$ used in the model fit? **comment**
 
