@@ -215,7 +215,7 @@ summary(lm3)
 ### c. Add random intercepts for child
 ```{r}
 # Insert code to fit new model and print summary output
-lm4 <- lmerTest:: lmer(math ~ year + (1 | schoolid/classid), data = class_pp)
+lm4 <- lmerTest:: lmer(math ~ year + (1 | schoolid/childid), data = class_pp)
 summary(lm4)
 ```
 
@@ -231,44 +231,57 @@ Report original and new variance estimates of $\sigma^2_{\zeta_0}$ (between scho
 $\sigma^2_{\zeta_0}:$ 
 
 * Original 348.7
-* New: 294.9 \newline
+* New: 307.5 \newline
  \newline
 $\sigma^2_{\varepsilon}:$ 
 
 * Original: 1268.4
-* New: 1179.1
+* New: 599.1
     
 ### a. Compute a pseudo $R^2$ relating the between school variation and ignoring between students in the same school. In other words, what fraction of the between-school variance in the first model is 'explained' by the addition of a student random effect?
 ```{r}
 # Insert code to compute psuedo R^2 or do this inline 
+(rsq_b <- (348.7 - 307.5)/(348.7))
 ```
+
+> The Psuedo-$R^2$ is `0.1181531` which means that approximately 15% of between-school variance in the first model is explained by the addition of the student random effect in the second model.
 
 ### b. Does the total variation stay about the same (adding between children within schools variance as well, to the second model results) **(you should comment)**?
     
     Response:
+  The total variation is approximately the same between both models (1619.9 in the first model, and 1608.6 in the second model).
     
 ## Question 10 
 Add a random slope ($\zeta_1$) for the trend (year) within schools (uncorrelated with random intercept ($\zeta_0$))
 ```{r}
-# Insert code to fit model and print out summary 
+lm5 <- lmerTest:: lmer(math ~ year + (0 + year | schoolid) + (1 | schoolid/childid), data = class_pp)
+summary(lm5)
 ```
 
 
 ### a. Generate the BLUPs for the random effects and examine whether the independence between zeta_0 and zeta_1 is reflected in a scatterplot of these two sets of effects. **(you should comment)**
 ```{r}
 # Insert code to generate BLUPs
+zeta_0_2 <- ranef(lm5)$schoolid[,1]
+zeta_1_2 <- ranef(lm5)$schoolid[,2]
+delta_0 <- ranef(lm5)$childid[,1]
+
+plot(zeta_1_2, zeta_0_2)
 ```
 
-    Response: 
+    Response:
+  The plot of the random effects of the intercept and slope for schools shows some evidence of independence. The points are approximately randomly scattered across different values of of the random slope, showing little to no correlation between the two.
 
 ### b. Compute V_S(year = 0) and V_S (year = 1). Since there are only two years, this is a form of heteroscedasticity in the random effects.
-```{r}
-# Insert code to compute terms or do this inline 
-```
+
+* V_S(year = 0) = $\sigma^2_{\zeta_0} + 0^2 \sigma^2_{\zeta_1} = \sigma^2_{\zeta_0} = 324.81$
+* V_S(year = 1) = $\sigma^2_{\zeta_0} + 1^2 \sigma^2_{\zeta_1} = \sigma^2_{\zeta_0} + \sigma^2_{\zeta_1} = 324.81 + 88.67 = 413.48$
+
 
 i. In which year is there more between school variation, net of all else, **(you should comment)**?
     
     Response: 
+  In year 1 there is more between school variation.
 
 ## Question 11
 If you ran the model BY YEAR, and removed the year trend from the model, would you get the same estimates for the variances between schools? **(you should comment)* *
@@ -283,15 +296,23 @@ Rerun the last nested longitudinal model, allowing correlation between intercept
 
 ### a. Is the correlation significant? **(you should comment)**
 ```{r}
-# Insert code to fit model, print the summary output, and compare models
+lm6 <- lmerTest:: lmer(math ~ year + (year | schoolid) + (1 | childid), data = class_pp)
+summary(lm6)
+
+anova(lm5, lm6, refit = F)
 ```
 
-    Response: 
+    Response:
+  The correlation is significant, suggesting that we need to add the correlation between the random slope and intercept for year varying by schools.
 
 ### b. Compute V_S (year = 0) and V_S(year = 1) for this new model (your formula should include covariance terms).
-```{r}
-# Insert code to compute terms or do this inline 
-```
+
+* V_S(year = 0) = $\sigma^2_{\zeta_0} + 0^2 \sigma^2_{\zeta_1} + 2\cdot0\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) = \sigma^2_{\zeta_0} = 370.6$
+* V_S(year = 1) =
+
+$$\sigma^2_{\zeta_0} + 1^2 \cdot \sigma^2_{\zeta_1} + 2\cdot1\cdot Cov(\sigma^2_{\zeta_0},\sigma^2_{\zeta_1}) = $$
+$$\sigma^2_{\zeta_0} + \sigma^2_{\zeta_1} + 2\cdot \sigma_{\zeta_0} \cdot \sigma_{\zeta_1} \cdot \rho(\sigma^2_{\zeta_0}, \sigma^2_{\zeta_1}) = $$
+$$370.6 + 109.1 + 2*(19.25)*(10.44)*(-0.45) = 298.827$$
 
   i. Is this result (and thus model) more consistent with the separate grade analysis? You are implicity testing model fit here. **(you should comment)**
       
