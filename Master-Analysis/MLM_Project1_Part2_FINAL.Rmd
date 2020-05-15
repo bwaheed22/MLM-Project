@@ -132,7 +132,7 @@ shapiro.test(eta0_ranef)
 ```
 
     Response: 
-  The density and QQ-plots of the random effects for schools and classrooms ($\zeta_0$ and $\eta_0$) show evidence of normality, with some concern in the left and right tails of the QQ-plots of both random effects. Additionally, Shapiro Wilks test fails to reject the null of non-normality for both ($\zeta_0$ and $\eta_0$).
+  The density and QQ-plots of the random effects for schools and classrooms ($\zeta_0$ and $\eta_0$) show evidence of normality, with some concern in the left and right tails of the QQ-plots of both random effects. Additionally, Shapiro Wilks test fails to reject the null of normality for both ($\zeta_0$ and $\eta_0$).
 
 \pagebreak
 
@@ -167,19 +167,15 @@ qqnorm(zeta0); qqline(zeta0)
 plot(density(zeta1), main = "Zeta1"); 
 qqnorm(zeta1); qqline(zeta1)
 
-# sm::sm.density(resFE_RE, model = 'normal')
-
 # shapiro wilks test
-# shapiro.test(resFE_RE)
+shapiro.test(resFE_RE)
 shapiro.test(zeta0)
 shapiro.test(zeta1)
 ```
 
 
     Response: 
-  The density & Q-Q plots of the individual level residuals appears to be symmetric and normal. However, the BLUPs do not show evidence of normality, with erratic density and qq-plots. Shapiro Wilks test reject the null of non-normality for both ($\zeta_0$ and $\zeta_1$)
-  
-  <!-- Additionally, Shapiro Wilks test fails to reject the null of non-normality for both ($\zeta_0$ and $\eta_0$). -->
+  The density & Q-Q plots of the individual level residuals appears to be symmetric and normal, however it's interesting to note that the Shapiro Wilks test rejects the null of normality in the data. This could be evident in the tails of the Q-Q plot. For the BLUPs, there is less evidence of normality, with erratic density and Q-Q plots. Shapiro Wilks tests reject the null of normality for both ($\zeta_0$ and $\zeta_1$)
   
 ### d. Plot zeta0 vs. zeta1 to see whether the estimated correlation is consistent with the observed. **Briefly comment**. 
 ```{r}
@@ -246,7 +242,7 @@ summary(lm3)
 ### b. Write down the model
 
     Equation: 
-  $$MATH_{tijk} = b_0 + \zeta_{0k} + b_1TIME_{tijk} + \epsilon_{tijk}$$
+  $$MATH_{tijk} = b_0 + \zeta_{0k} + b_1YEAR_{tijk} + \epsilon_{tijk}$$
   $$\mbox{with } \zeta_{0k} \sim N(0, \sigma^2_{\zeta_0}) \mbox{, } \epsilon_{tijk} \sim N(0, \sigma^2_{\epsilon}) \mbox{, independent of each other}$$
     
 ### c. Add random intercepts for child
@@ -259,7 +255,7 @@ summary(lm4)
 ### d. Write down the model
 
     Equation: 
-  $$MATH_{tijk} = b_0 + \delta_{0ijk} + \zeta_{0k} + b_1TIME_{tijk} + \epsilon_{tijk}$$
+  $$MATH_{tijk} = b_0 + \delta_{0ijk} + \zeta_{0k} + b_1YEAR_{tijk} + \epsilon_{tijk}$$
   $$\mbox{with } \zeta_{0k} \sim N(0, \sigma^2_{\zeta_0}) \mbox{, } \delta_{0ijk} \sim N(0, \sigma^2_{\delta_0}) \mbox{, } \epsilon_{tijk} \sim N(0, \sigma^2_{\epsilon}) \mbox{, independent of each other}$$
 
 ## Question 9
